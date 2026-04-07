@@ -248,7 +248,33 @@ export default function SalePage() {
             </select>
 
             <textarea value={form.addr} onChange={e => setForm({ ...form, addr: e.target.value })} placeholder="ที่อยู่จัดส่ง *" rows={3}
-              style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 16, color: '#222', resize: 'vertical' }} />
+              style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 14, color: '#222', resize: 'vertical' }} />
+
+            {/* ── สรุปยอดชำระ ── */}
+            {selPkg && (
+              <div style={{ background: '#f8f9fa', borderRadius: 12, padding: '14px 16px', marginBottom: 16, border: '1px solid #eee' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#555', marginBottom: 10 }}>🧾 สรุปคำสั่งซื้อ</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 14 }}>
+                  <span style={{ color: '#666' }}>{selPkg.name}</span>
+                  <span style={{ color: '#333', fontWeight: 600 }}>฿{selPkg.price?.toLocaleString()}</span>
+                </div>
+                {selPkg.orig > selPkg.price && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
+                    <span style={{ color: '#999' }}>ส่วนลด</span>
+                    <span style={{ color: red, fontWeight: 600 }}>-฿{(selPkg.orig - selPkg.price).toLocaleString()}</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
+                  <span style={{ color: '#999' }}>ค่าจัดส่ง</span>
+                  <span style={{ color: '#27ae60', fontWeight: 600 }}>ฟรี</span>
+                </div>
+                <div style={{ borderTop: '1.5px solid #e0e0e0', paddingTop: 10, marginTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: '#333' }}>ยอดชำระทั้งหมด</span>
+                  <span style={{ fontSize: 24, fontWeight: 800, color: accent }}>฿{selPkg.price?.toLocaleString()}</span>
+                </div>
+                <div style={{ fontSize: 11, color: '#bbb', marginTop: 6, textAlign: 'right' }}>💰 ชำระเงินปลายทาง (COD)</div>
+              </div>
+            )}
 
             <button onClick={submit} disabled={sending}
               style={{ width: '100%', padding: '16px 0', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${accent}, #5fa8e8)`, color: '#fff', fontSize: 17, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit', boxShadow: `0 4px 16px ${accent}44`, animation: 'pulse 2s infinite' }}>
