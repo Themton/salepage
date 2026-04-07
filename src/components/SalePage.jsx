@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { getPageBySlug, createOrder, trackEvent } from '../lib/supabase';
 
-const green = '#2d6b45', red = '#c0392b', bg = '#faf9f6';
+const accent = '#2e86de', red = '#c0392b', bg = '#faf9f6', gold = '#c9953c';
 const pad = n => String(n).padStart(2, '0');
 const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
 
@@ -78,7 +78,7 @@ export default function SalePage() {
   if (done) return (
     <div style={{ minHeight: '100vh', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Noto Sans Thai', sans-serif", padding: 20 }}>
       <div className="fade-in" style={{ textAlign: 'center', maxWidth: 380 }}>
-        <div style={{ width: 70, height: 70, borderRadius: '50%', background: '#e8f5e9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 32 }}>✅</div>
+        <div style={{ width: 70, height: 70, borderRadius: '50%', background: '#e3f2fd', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 32 }}>✅</div>
         <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>สั่งซื้อสำเร็จ!</h2>
         <p style={{ color: '#777', fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>ขอบคุณค่ะ ทีมงานจะโทรยืนยัน<br />ภายใน 30 นาที</p>
         <div style={{ background: '#fff', borderRadius: 14, padding: 18, border: '1px solid #eee', textAlign: 'left' }}>
@@ -101,10 +101,10 @@ export default function SalePage() {
       )}
 
       {/* HERO */}
-      <div style={{ background: `linear-gradient(180deg, #1a3a2a, ${green})`, color: '#fff', padding: '32px 18px 28px', textAlign: 'center' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#ffd700', marginBottom: 8 }}>🔥 โปรสุดคุ้ม วันนี้เท่านั้น!</div>
-        <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 8px', lineHeight: 1.4 }}>{p.name}</h1>
-        <p style={{ fontSize: 14, margin: '0 0 20px', color: '#ffffffcc' }}>{p.subtitle || p.tagline}</p>
+      <div style={{ background: '#fff', borderBottom: '1px solid #eee', color: '#fff', padding: '32px 18px 28px', textAlign: 'center' }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#e67e22', marginBottom: 8 }}>🔥 โปรสุดคุ้ม วันนี้เท่านั้น!</div>
+        <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 8px', lineHeight: 1.4, color: '#222' }}>{p.name}</h1>
+        <p style={{ fontSize: 14, margin: '0 0 20px', color: '#888' }}>{p.subtitle || p.tagline}</p>
 
         {imgs.length > 0 ? (
           <div style={{ position: 'relative', width: '80%', maxWidth: 300, margin: '0 auto', borderRadius: 16, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,.3)' }}>
@@ -112,14 +112,14 @@ export default function SalePage() {
               {imgs.map((src, i) => <img key={i} src={src} style={{ width: '100%', flexShrink: 0, aspectRatio: '1', objectFit: 'cover' }} />)}
             </div>
             {imgs.length > 1 && <div style={{ position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 5 }}>
-              {imgs.map((_, i) => <div key={i} onClick={() => setSlideIdx(i)} style={{ width: 7, height: 7, borderRadius: '50%', background: i === slideIdx ? '#ffd700' : '#fff5', cursor: 'pointer' }} />)}
+              {imgs.map((_, i) => <div key={i} onClick={() => setSlideIdx(i)} style={{ width: 7, height: 7, borderRadius: '50%', background: i === slideIdx ? accent : '#ccc', cursor: 'pointer' }} />)}
             </div>}
           </div>
         ) : (
-          <div style={{ width: 160, height: 180, borderRadius: 16, background: '#ffffff15', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed #ffffff30', fontSize: 48 }}>🧴</div>
+          <div style={{ width: 160, height: 180, borderRadius: 16, background: '#f0f2f5', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed #ddd', fontSize: 48 }}>🧴</div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 20, fontSize: 12, color: '#ffffffbb' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 20, fontSize: 12, color: '#999' }}>
           <span>📦 เก็บเงินปลายทาง</span><span>🚚 ส่งฟรีทั่วประเทศ</span>
         </div>
       </div>
@@ -140,8 +140,8 @@ export default function SalePage() {
         )}
 
         {/* SOLUTION */}
-        <div style={{ background: green, color: '#fff', padding: '22px 18px', textAlign: 'center', borderRadius: 0 }}>
-          <div style={{ fontSize: 14, color: '#ffd700', marginBottom: 4 }}>✨ หมดปัญหาด้วย</div>
+        <div style={{ background: '#f0f7ff', color: '#333', padding: '22px 18px', textAlign: 'center', borderRadius: 0 }}>
+          <div style={{ fontSize: 14, color: '#e67e22', marginBottom: 4 }}>✨ หมดปัญหาด้วย</div>
           <div style={{ fontSize: 22, fontWeight: 800 }}>{p.name}</div>
         </div>
 
@@ -150,7 +150,7 @@ export default function SalePage() {
           <div style={{ padding: '28px 18px' }}>
             {p.benefits.map((b, i) => (
               <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 16 }}>
-                <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#e8f5e9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: green, fontWeight: 800, fontSize: 15 }}>✓</div>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#e3f2fd', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: accent, fontWeight: 800, fontSize: 15 }}>✓</div>
                 <div><div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>{b.title}</div><div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>{b.desc}</div></div>
               </div>
             ))}
@@ -190,7 +190,7 @@ export default function SalePage() {
                 <div style={{ color: '#f5a623', fontSize: 13, letterSpacing: 2, marginBottom: 6 }}>{stars(r.rating)}</div>
                 <p style={{ margin: '0 0 10px', fontSize: 13, color: '#444', lineHeight: 1.7 }}>{r.text}</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#e8f5e9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>👩</div>
+                  <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#e3f2fd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>👩</div>
                   <div><div style={{ fontSize: 12, fontWeight: 600 }}>{r.name}</div><div style={{ fontSize: 10, color: '#999' }}>{r.location}</div></div>
                 </div>
               </div>
@@ -208,19 +208,19 @@ export default function SalePage() {
               return (
                 <div key={i} onClick={() => setPkg(i)}
                   style={{ borderRadius: 14, padding: '16px 14px', marginBottom: 8, cursor: 'pointer', position: 'relative', overflow: 'hidden', transition: 'all .2s',
-                    border: sel ? `2.5px solid ${green}` : '1.5px solid #e0dcd4',
+                    border: sel ? `2.5px solid ${accent}` : '1.5px solid #e0dcd4',
                     background: sel ? '#f0faf4' : '#fff',
-                    boxShadow: sel ? `0 4px 16px ${green}22` : 'none' }}>
+                    boxShadow: sel ? `0 4px 16px ${accent}22` : 'none' }}>
                   {pk.badge && <div style={{ position: 'absolute', top: 0, right: 0, background: i >= 2 ? '#9b59b6' : red, color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 12px', borderRadius: '0 12px 0 10px' }}>{pk.badge}</div>}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 20, height: 20, borderRadius: '50%', border: sel ? `6px solid ${green}` : '2px solid #ccc', boxSizing: 'border-box', flexShrink: 0 }} />
+                    <div style={{ width: 20, height: 20, borderRadius: '50%', border: sel ? `6px solid ${accent}` : '2px solid #ccc', boxSizing: 'border-box', flexShrink: 0 }} />
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 15, fontWeight: 700 }}>{pk.name}</div>
                       <div style={{ fontSize: 11, color: '#999' }}>{pk.desc}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       {pk.orig > pk.price && <div style={{ fontSize: 12, color: '#bbb', textDecoration: 'line-through' }}>฿{pk.orig.toLocaleString()}</div>}
-                      <div style={{ fontSize: 22, fontWeight: 800, color: sel ? green : '#333' }}>฿{pk.price.toLocaleString()}</div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: sel ? accent : '#333' }}>฿{pk.price.toLocaleString()}</div>
                       {pct > 0 && <div style={{ fontSize: 10, color: red, fontWeight: 700 }}>ประหยัด {pct}%</div>}
                     </div>
                   </div>
@@ -251,7 +251,7 @@ export default function SalePage() {
               style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 16, color: '#222', resize: 'vertical' }} />
 
             <button onClick={submit} disabled={sending}
-              style={{ width: '100%', padding: '16px 0', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${green}, #3a8f5c)`, color: '#fff', fontSize: 17, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit', boxShadow: `0 4px 16px ${green}44`, animation: 'pulse 2s infinite' }}>
+              style={{ width: '100%', padding: '16px 0', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${accent}, #5fa8e8)`, color: '#fff', fontSize: 17, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit', boxShadow: `0 4px 16px ${accent}44`, animation: 'pulse 2s infinite' }}>
               {sending ? 'กำลังสั่งซื้อ...' : '✅ ยืนยันสั่งซื้อ (เก็บเงินปลายทาง)'}
             </button>
 
@@ -264,7 +264,7 @@ export default function SalePage() {
         {/* GUARANTEE */}
         {p.guarantee && (
           <div style={{ padding: '0 18px 24px' }}>
-            <div style={{ background: '#f0faf4', borderRadius: 14, padding: '20px 18px', textAlign: 'center', border: `1px solid ${green}22` }}>
+            <div style={{ background: '#f0f7ff', borderRadius: 14, padding: '20px 18px', textAlign: 'center', border: `1px solid ${accent}22` }}>
               <div style={{ fontSize: 28, marginBottom: 4 }}>🛡️</div>
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>รับประกันคืนเงิน 30 วัน</div>
               <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>{p.guarantee}</div>
@@ -298,7 +298,7 @@ export default function SalePage() {
       {/* STICKY CTA */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', padding: '10px 18px', boxShadow: '0 -4px 20px rgba(0,0,0,.1)', zIndex: 80, textAlign: 'center' }}>
         <button onClick={scrollToForm}
-          style={{ width: '100%', maxWidth: 500, padding: '13px 0', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${green}, #3a8f5c)`, color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}>
+          style={{ width: '100%', maxWidth: 500, padding: '13px 0', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${accent}, #5fa8e8)`, color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}>
           🛒 สั่งซื้อเลย — เริ่มต้น ฿{p.packages?.[0]?.price || 299} ส่งฟรี!
         </button>
       </div>
