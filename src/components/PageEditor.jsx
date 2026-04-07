@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getPageById, updatePage, getOrders, updateOrderStatus, getEventStats, getCustomers, importCustomers, deleteCustomer } from '../lib/supabase';
+import { getPageById, updatePage, getOrders, updateOrderStatus, getEventStats, getCustomers, importCustomers, deleteCustomer, uploadImage, deleteImage } from '../lib/supabase';
 
 // ── Light theme colors (matching ClickSalepage) ──
 const blue = '#2e86de', green = '#27ae60', red = '#e74c3c', gold = '#f39c12', bg = '#f0f2f5';
@@ -56,24 +56,39 @@ function newBlockData(type) {
 // ── Block Editor Components ──
 function ImageBlock({ data, onChange }) {
   const ref = useRef();
-  const add = file => { if (!file || file.size > 3e6) return; const r = new FileReader(); r.onload = e => onChange({ ...data, images: [...(data.images || []), e.target.result] }); r.readAsDataURL(file); };
+  const [uploading, setUploading] = useState(false);
+  const add = async (file) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadImage(file);
+      onChange({ ...data, images: [...(data.images || []), url] });
+    } catch (e) { alert('อัปโหลดไม่สำเร็จ: ' + e.message); }
+    setUploading(false);
+  };
+  const remove = async (i) => {
+    const url = data.images[i];
+    if (url && !url.startsWith('data:')) { try { await deleteImage(url); } catch {} }
+    onChange({ ...data, images: data.images.filter((_, idx) => idx !== i) });
+  };
   return (
     <div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {(data.images || []).map((src, i) => (
           <div key={i} style={{ position: 'relative', width: 80, height: 80, borderRadius: 10, overflow: 'hidden', border: '1px solid #eee' }}>
             <img src={src} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            <button onClick={() => onChange({ ...data, images: data.images.filter((_, idx) => idx !== i) })}
+            <button onClick={() => remove(i)}
               style={{ position: 'absolute', top: 2, right: 2, background: '#000a', color: '#fff', border: 'none', borderRadius: '50%', width: 20, height: 20, fontSize: 11, cursor: 'pointer' }}>✕</button>
           </div>
         ))}
         <input ref={ref} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { add(e.target.files[0]); e.target.value = ''; }} />
-        <button onClick={() => ref.current?.click()}
-          style={{ width: 80, height: 80, borderRadius: 10, border: '2px dashed #ccc', background: '#fafafa', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#999', gap: 2 }}>
-          <span style={{ fontSize: 24 }}>📷</span>
-          <span style={{ fontSize: 10 }}>เพิ่มรูป</span>
+        <button onClick={() => !uploading && ref.current?.click()} disabled={uploading}
+          style={{ width: 80, height: 80, borderRadius: 10, border: '2px dashed #ccc', background: uploading ? '#f0f0f0' : '#fafafa', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#999', gap: 2 }}>
+          <span style={{ fontSize: 24 }}>{uploading ? '⏳' : '📷'}</span>
+          <span style={{ fontSize: 9 }}>{uploading ? 'กำลังอัป...' : 'เพิ่มรูป'}</span>
         </button>
       </div>
+      <div style={{ fontSize: 11, color: '#bbb', marginTop: 6 }}>ไม่จำกัดขนาดไฟล์ · รองรับ JPG, PNG, WebP</div>
     </div>
   );
 }
@@ -126,16 +141,32 @@ function PackagesBlock({ data, onChange }) {
 
 function BeforeAfterBlock({ data, onChange }) {
   const ref = useRef();
-  const add = file => { if (!file || file.size > 3e6) return; const r = new FileReader(); r.onload = e => onChange({ ...data, image: e.target.result }); r.readAsDataURL(file); };
+  const [uploading, setUploading] = useState(false);
+  const add = async (file) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadImage(file);
+      onChange({ ...data, image: url });
+    } catch (e) { alert('อัปโหลดไม่สำเร็จ'); }
+    setUploading(false);
+  };
+  const remove = async () => {
+    if (data.image && !data.image.startsWith('data:')) { try { await deleteImage(data.image); } catch {} }
+    onChange({ ...data, image: '' });
+  };
   return data.image ? (
     <div style={{ position: 'relative', maxWidth: 300 }}>
       <img src={data.image} style={{ width: '100%', borderRadius: 10 }} />
-      <button onClick={() => onChange({ ...data, image: '' })} style={{ position: 'absolute', top: 4, right: 4, background: '#000a', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer' }}>✕</button>
+      <button onClick={remove} style={{ position: 'absolute', top: 4, right: 4, background: '#000a', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer' }}>✕</button>
     </div>
   ) : (
     <div>
       <input ref={ref} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { add(e.target.files[0]); e.target.value = ''; }} />
-      <button onClick={() => ref.current?.click()} style={{ padding: '16px 24px', borderRadius: 10, border: '2px dashed #ddd', background: '#fafafa', color: '#999', cursor: 'pointer', fontFamily: 'inherit' }}>📷 เพิ่มรูป Before/After</button>
+      <button onClick={() => !uploading && ref.current?.click()} disabled={uploading}
+        style={{ padding: '16px 24px', borderRadius: 10, border: '2px dashed #ddd', background: '#fafafa', color: '#999', cursor: 'pointer', fontFamily: 'inherit' }}>
+        {uploading ? '⏳ กำลังอัปโหลด...' : '📷 เพิ่มรูป Before/After'}
+      </button>
     </div>
   );
 }

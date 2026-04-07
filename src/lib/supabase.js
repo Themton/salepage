@@ -92,3 +92,23 @@ export const importCustomers = async (pageId, rows) => {
 export const deleteCustomer = async (id) => {
   await supabase.from('sp_customers').delete().eq('id', id);
 };
+
+// ── Storage (Images) ──
+const BUCKET = 'sp-images';
+
+export const uploadImage = async (file) => {
+  const ext = file.name.split('.').pop();
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { data, error } = await supabase.storage.from(BUCKET).upload(fileName, file, {
+    cacheControl: '31536000',
+    upsert: false,
+  });
+  if (error) throw error;
+  const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(data.path);
+  return urlData.publicUrl;
+};
+
+export const deleteImage = async (url) => {
+  const path = url.split(`${BUCKET}/`).pop();
+  if (path) await supabase.storage.from(BUCKET).remove([path]);
+};
