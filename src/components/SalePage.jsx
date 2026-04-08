@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { getPageBySlug, createOrder, trackEvent } from '../lib/supabase';
+import addrData from '../lib/thaddr.json';
 
 const accent = '#2e86de', red = '#c0392b', bg = '#faf9f6', gold = '#c9953c';
 const pad = n => String(n).padStart(2, '0');
@@ -33,6 +34,27 @@ export default function SalePage() {
   const [form, setForm] = useState({ name: '', tel: '', addr: '', subdistrict: '', district: '', province: '', zip: '', fbline: '', remark: '' });
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
+  const [addrSugg, setAddrSugg] = useState([]);
+  const [addrField, setAddrField] = useState('');
+
+  // Address search: [zip, subdistrict, district, province]
+  const searchAddr = (field, val) => {
+    if (!val || val.length < 2) { setAddrSugg([]); setAddrField(''); return; }
+    const v = val.trim().toLowerCase();
+    let results;
+    if (field === 'zip') results = addrData.filter(r => String(r[0]).startsWith(v));
+    else if (field === 'subdistrict') results = addrData.filter(r => r[1].toLowerCase().includes(v));
+    else if (field === 'district') results = addrData.filter(r => r[2].toLowerCase().includes(v));
+    else if (field === 'province') results = addrData.filter(r => r[3].toLowerCase().includes(v));
+    setAddrSugg(results?.slice(0, 10) || []);
+    setAddrField(field);
+  };
+
+  const pickAddr = (r) => {
+    setForm(f => ({ ...f, zip: String(r[0]), subdistrict: r[1], district: r[2], province: r[3] }));
+    setAddrSugg([]);
+    setAddrField('');
+  };
   const [countdown, setCountdown] = useState(null);
   const [slideIdx, setSlideIdx] = useState(0);
   const [openFaq, setOpenFaq] = useState(null);
@@ -73,6 +95,10 @@ export default function SalePage() {
     if (!form.name || !form.tel || !form.addr) return alert('กรุณากรอกข้อมูลให้ครบ');
     const telClean = form.tel.replace(/\D/g, '');
     if (telClean.length !== 10) return alert('เบอร์โทรศัพท์ต้องครบ 10 หลัก');
+    if (!form.zip || form.zip.length !== 5) return alert('กรุณากรอกรหัสไปรษณีย์ 5 หลัก');
+    if (!addrData.some(r => String(r[0]) === form.zip)) return alert('รหัสไปรษณีย์ไม่ถูกต้อง กรุณาตรวจสอบ');
+    if (!form.subdistrict || !form.district || !form.province) return alert('กรุณากรอกตำบล อำเภอ และจังหวัดให้ครบ');
+    setAddrSugg([]);
     setSending(true);
     const selPkg = p.packages?.[pkg] || p.packages?.[0] || { name: 'สินค้า', price: 0 };
     try {
@@ -279,17 +305,48 @@ export default function SalePage() {
               style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 10, color: '#222', resize: 'vertical' }} />
 
             <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-              <input value={form.subdistrict} onChange={e => setForm({ ...form, subdistrict: e.target.value })} placeholder="ตำบล/แขวง"
-                style={{ flex: 1, boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
-              <input value={form.district} onChange={e => setForm({ ...form, district: e.target.value })} placeholder="อำเภอ/เขต"
-                style={{ flex: 1, boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
+              <div style={{ flex: 1, position: 'relative' }}>
+                <input value={form.zip} onChange={e => { setForm({ ...form, zip: e.target.value }); searchAddr('zip', e.target.value); }} placeholder="รหัสไปรษณีย์ *" type="tel" autoComplete="off"
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
+                {addrField === 'zip' && addrSugg.length > 0 && (
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #ddd', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,.12)', zIndex: 50, maxHeight: 200, overflow: 'auto' }}>
+                    {addrSugg.map((r, i) => <div key={i} onClick={() => pickAddr(r)} style={{ padding: '10px 14px', fontSize: 13, cursor: 'pointer', borderBottom: '1px solid #f0f0f0' }}><b>{r[0]}</b> — {r[1]} · {r[2]} · {r[3]}</div>)}
+                  </div>
+                )}
+              </div>
+              <div style={{ flex: 1, position: 'relative' }}>
+                <input value={form.subdistrict} onChange={e => { setForm({ ...form, subdistrict: e.target.value }); searchAddr('subdistrict', e.target.value); }} placeholder="ตำบล/แขวง" autoComplete="off"
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
+                {addrField === 'subdistrict' && addrSugg.length > 0 && (
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #ddd', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,.12)', zIndex: 50, maxHeight: 200, overflow: 'auto' }}>
+                    {addrSugg.map((r, i) => <div key={i} onClick={() => pickAddr(r)} style={{ padding: '10px 14px', fontSize: 13, cursor: 'pointer', borderBottom: '1px solid #f0f0f0' }}><b>{r[1]}</b> · {r[2]} · {r[3]} · {r[0]}</div>)}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-              <input value={form.province} onChange={e => setForm({ ...form, province: e.target.value })} placeholder="จังหวัด"
-                style={{ flex: 1, boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
-              <input value={form.zip} onChange={e => setForm({ ...form, zip: e.target.value })} placeholder="รหัสไปรษณีย์" type="tel"
-                style={{ flex: 1, boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
+              <div style={{ flex: 1, position: 'relative' }}>
+                <input value={form.district} onChange={e => { setForm({ ...form, district: e.target.value }); searchAddr('district', e.target.value); }} placeholder="อำเภอ/เขต" autoComplete="off"
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
+                {addrField === 'district' && addrSugg.length > 0 && (
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #ddd', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,.12)', zIndex: 50, maxHeight: 200, overflow: 'auto' }}>
+                    {addrSugg.map((r, i) => <div key={i} onClick={() => pickAddr(r)} style={{ padding: '10px 14px', fontSize: 13, cursor: 'pointer', borderBottom: '1px solid #f0f0f0' }}><b>{r[2]}</b> · {r[1]} · {r[3]} · {r[0]}</div>)}
+                  </div>
+                )}
+              </div>
+              <div style={{ flex: 1, position: 'relative' }}>
+                <input value={form.province} onChange={e => { setForm({ ...form, province: e.target.value }); searchAddr('province', e.target.value); }} placeholder="จังหวัด" autoComplete="off"
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
+                {addrField === 'province' && addrSugg.length > 0 && (
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #ddd', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,.12)', zIndex: 50, maxHeight: 200, overflow: 'auto' }}>
+                    {addrSugg.map((r, i) => <div key={i} onClick={() => pickAddr(r)} style={{ padding: '10px 14px', fontSize: 13, cursor: 'pointer', borderBottom: '1px solid #f0f0f0' }}><b>{r[3]}</b> · {r[2]} · {r[1]} · {r[0]}</div>)}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
               <input value={form.fbline} onChange={e => setForm({ ...form, fbline: e.target.value })} placeholder="Facebook/Line (ไม่บังคับ)"
                 style={{ flex: 1, boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
             </div>
