@@ -30,7 +30,7 @@ export default function SalePage() {
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pkg, setPkg] = useState(1);
-  const [form, setForm] = useState({ name: '', tel: '', addr: '' });
+  const [form, setForm] = useState({ name: '', tel: '', addr: '', subdistrict: '', district: '', zip: '', fbline: '', remark: '' });
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
   const [countdown, setCountdown] = useState(null);
@@ -79,6 +79,11 @@ export default function SalePage() {
         customer_name: form.name,
         customer_tel: form.tel,
         customer_addr: form.addr,
+        customer_subdistrict: form.subdistrict,
+        customer_district: form.district,
+        customer_zip: form.zip,
+        customer_fb_line: form.fbline,
+        remark: form.remark,
         package_name: selPkg.name,
         total: selPkg.price,
         status: 'pending',
@@ -105,7 +110,8 @@ export default function SalePage() {
         <div style={{ background: '#fff', borderRadius: 14, padding: 18, border: '1px solid #eee', textAlign: 'left' }}>
           <div style={{ fontSize: 14, fontWeight: 600 }}>{selPkg?.name} — ฿{selPkg?.price?.toLocaleString()}</div>
           <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>👤 {form.name} · 📞 {form.tel}</div>
-          <div style={{ fontSize: 12, color: '#888' }}>📍 {form.addr}</div>
+          <div style={{ fontSize: 12, color: '#888' }}>📍 {form.addr} {form.subdistrict} {form.district} {form.zip}</div>
+          {form.remark && <div style={{ fontSize: 12, color: '#888' }}>📝 {form.remark}</div>}
         </div>
       </div>
     </div>
@@ -257,14 +263,31 @@ export default function SalePage() {
             <h2 style={{ fontSize: 18, fontWeight: 800, textAlign: 'center', margin: '0 0 4px' }}>📋 กรอกข้อมูลสั่งซื้อ</h2>
             <p style={{ textAlign: 'center', fontSize: 12, color: '#999', marginBottom: 16 }}>เก็บเงินปลายทาง ส่งฟรีทั่วประเทศ</p>
 
-            {[['name', 'ชื่อ - นามสกุล *'], ['tel', 'เบอร์โทรศัพท์ *']].map(([k, ph]) => (
+            {[['name', 'ชื่อ - นามสกุล *'], ['tel', 'เบอร์โทรศัพท์ * (10 หลัก)']].map(([k, ph]) => (
               <input key={k} value={form[k]} onChange={e => setForm({ ...form, [k]: e.target.value })} placeholder={ph}
                 type={k === 'tel' ? 'tel' : 'text'}
                 style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 10, color: '#222' }} />
             ))}
 
-            <textarea value={form.addr} onChange={e => setForm({ ...form, addr: e.target.value })} placeholder="ที่อยู่จัดส่ง *" rows={3}
-              style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 14, color: '#222', resize: 'vertical' }} />
+            <textarea value={form.addr} onChange={e => setForm({ ...form, addr: e.target.value })} placeholder="ที่อยู่ * (บ้านเลขที่ ซอย ถนน)" rows={2}
+              style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 10, color: '#222', resize: 'vertical' }} />
+
+            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+              <input value={form.subdistrict} onChange={e => setForm({ ...form, subdistrict: e.target.value })} placeholder="ตำบล/แขวง"
+                style={{ flex: 1, boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
+              <input value={form.district} onChange={e => setForm({ ...form, district: e.target.value })} placeholder="อำเภอ/เขต"
+                style={{ flex: 1, boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+              <input value={form.zip} onChange={e => setForm({ ...form, zip: e.target.value })} placeholder="รหัสไปรษณีย์" type="tel"
+                style={{ flex: 1, boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
+              <input value={form.fbline} onChange={e => setForm({ ...form, fbline: e.target.value })} placeholder="Facebook/Line (ไม่บังคับ)"
+                style={{ flex: 1, boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
+            </div>
+
+            <input value={form.remark} onChange={e => setForm({ ...form, remark: e.target.value })} placeholder="หมายเหตุ (ไม่บังคับ)"
+              style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 14, color: '#222' }} />
 
             {/* ── สรุปยอดชำระ ── */}
             {selPkg && (

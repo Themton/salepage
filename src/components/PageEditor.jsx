@@ -452,7 +452,9 @@ export default function PageEditor() {
                 </div>
                 <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2, color: '#333' }}>{o.customer_name}</div>
                 <div style={{ fontSize: 12, color: '#888' }}>📞 {o.customer_tel} · 📦 {o.package_name}</div>
-                <div style={{ fontSize: 12, color: '#aaa', marginBottom: 6 }}>📍 {o.customer_addr}</div>
+                <div style={{ fontSize: 12, color: '#aaa', marginBottom: 2 }}>📍 {o.customer_addr} {o.customer_subdistrict} {o.customer_district} {o.customer_zip}</div>
+                {o.customer_fb_line && <div style={{ fontSize: 11, color: '#bbb' }}>💬 {o.customer_fb_line}</div>}
+                {o.remark && <div style={{ fontSize: 11, color: '#bbb', marginBottom: 4 }}>📝 {o.remark}</div>}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
                   <span style={{ fontWeight: 700, color: green, fontSize: 16 }}>฿{(o.total || 0).toLocaleString()}</span>
                   <div style={{ display: 'flex', gap: 3 }}>
