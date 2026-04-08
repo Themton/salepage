@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPages, createPage, deletePage, getAllOrders, getParcels, createParcelFromOrder, updateParcelFlash, flashCreateOrder, flashGetLabel, flashTracking, updateOrderStatus } from '../lib/supabase';
+import { getPages, createPage, deletePage, getAllOrders, getParcels, createParcelFromOrder, updateParcel, updateParcelFlash, flashCreateOrder, flashGetLabel, flashTracking, updateOrderStatus } from '../lib/supabase';
 import { DEFAULT_SETTINGS } from '../lib/defaults';
 
 const blue = '#2e86de', green = '#27ae60', red = '#e74c3c', bg = '#f0f2f5', flash = '#ffd400';
@@ -32,6 +32,7 @@ export default function AdminDashboard() {
   });
   const [showSender, setShowSender] = useState(false);
   const [parcelFilter, setParcelFilter] = useState('all');
+  const [editModal, setEditModal] = useState(null);
 
   const showToast = msg => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
@@ -81,21 +82,55 @@ export default function AdminDashboard() {
       setShowSender(true);
       return;
     }
-    setBusy(b => ({ ...b, [`flash_${parcel.id}`]: true }));
+    // Open edit modal to fill/verify address
+    setEditModal({
+      ...parcel,
+      receiver_name: parcel.receiver_name || parcel.sp_orders?.customer_name || '',
+      receiver_phone: parcel.receiver_phone || parcel.sp_orders?.customer_tel || '',
+      receiver_address: parcel.receiver_address || parcel.sp_orders?.customer_addr || '',
+      receiver_province: parcel.receiver_province || '',
+      receiver_district: parcel.receiver_district || '',
+      receiver_subdistrict: parcel.receiver_subdistrict || '',
+      receiver_postal: parcel.receiver_postal || '',
+      cod_amount: parcel.cod_amount || parcel.sp_orders?.total || 0,
+      weight: parcel.weight || 1000,
+    });
+  };
+
+  const handleFlashSubmit = async () => {
+    const p = editModal;
+    if (!p.receiver_name || !p.receiver_phone || !p.receiver_postal) {
+      showToast('⚠️ กรุณากรอกชื่อ เบอร์ และรหัสไปรษณีย์');
+      return;
+    }
+    setBusy(b => ({ ...b, [`flash_${p.id}`]: true }));
+    setEditModal(null);
     try {
-      const result = await flashCreateOrder(parcel, senderForm);
+      // Save address back to sp_parcels first
+      await updateParcel(p.id, {
+        receiver_name: p.receiver_name,
+        receiver_phone: p.receiver_phone,
+        receiver_address: p.receiver_address,
+        receiver_province: p.receiver_province,
+        receiver_district: p.receiver_district,
+        receiver_subdistrict: p.receiver_subdistrict,
+        receiver_postal: p.receiver_postal,
+        cod_amount: p.cod_amount,
+        weight: p.weight,
+      });
+      const result = await flashCreateOrder(p, senderForm);
       if (result.code === 1 && result.data) {
         const pno = result.data.pno;
         const sortCode = result.data.sortCode || '';
         const dstStore = result.data.dstStoreName || '';
-        await updateParcelFlash(parcel.id, pno, sortCode, dstStore, result.data);
+        await updateParcelFlash(p.id, pno, sortCode, dstStore, result.data);
         showToast(`✅ ได้เลข ${pno}`);
         loadAll();
       } else {
         showToast(`❌ Flash: ${result.message || JSON.stringify(result)}`);
       }
     } catch (e) { showToast('❌ ' + e.message); }
-    setBusy(b => ({ ...b, [`flash_${parcel.id}`]: false }));
+    setBusy(b => ({ ...b, [`flash_${p.id}`]: false }));
   };
 
   const handleBulkFlash = async () => {
@@ -377,6 +412,51 @@ export default function AdminDashboard() {
           })}
         </div>)}
       </div>
+
+      {/* Edit Parcel Modal */}
+      {editModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          onClick={() => setEditModal(null)}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 24, maxWidth: 500, width: '100%', maxHeight: '85vh', overflow: 'auto' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#333' }}>⚡ สร้างเลข Flash</div>
+                <div style={{ fontSize: 12, color: '#999' }}>{editModal.parcel_no}</div>
+              </div>
+              <button onClick={() => setEditModal(null)} style={{ ...btnS('#f5f5f5', '#999'), fontSize: 16 }}>✕</button>
+            </div>
+            {[
+              ['receiver_name', '👤 ชื่อผู้รับ'],
+              ['receiver_phone', '📞 เบอร์โทร'],
+              ['receiver_address', '🏠 ที่อยู่'],
+              ['receiver_province', '🗺 จังหวัด'],
+              ['receiver_district', '🏘 อำเภอ/เขต'],
+              ['receiver_subdistrict', '📍 ตำบล/แขวง'],
+              ['receiver_postal', '📮 รหัสไปรษณีย์'],
+            ].map(([k, label]) => (
+              <div key={k} style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>{label} {['receiver_name','receiver_phone','receiver_postal'].includes(k) && <span style={{ color: red }}>*</span>}</div>
+                <input value={editModal[k] || ''} onChange={e => setEditModal({ ...editModal, [k]: e.target.value })} style={inp} />
+              </div>
+            ))}
+            <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>💵 COD (บาท)</div>
+                <input type="number" value={editModal.cod_amount || 0} onChange={e => setEditModal({ ...editModal, cod_amount: Number(e.target.value) })} style={inp} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>⚖️ น้ำหนัก (กรัม)</div>
+                <input type="number" value={editModal.weight || 1000} onChange={e => setEditModal({ ...editModal, weight: Number(e.target.value) })} style={inp} />
+              </div>
+            </div>
+            <button onClick={handleFlashSubmit}
+              style={{ ...btnS('#333', flash), width: '100%', marginTop: 16, padding: '14px 0', fontSize: 16 }}>
+              ⚡ ยืนยัน — สร้างเลข TH
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Tracking Modal */}
       {trackModal && (
