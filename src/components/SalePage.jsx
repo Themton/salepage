@@ -93,13 +93,9 @@ export default function SalePage() {
         meta: { pkg: pkg },
       };
       const order = await createOrder(orderData);
-      // สร้างเลขพัสดุ Flash Express
+      // สร้างเลขพัสดุ
       try {
-        const pno = await createParcelFromOrder(
-          { ...orderData, id: order.id },
-          p.name,
-          p.senderInfo || {}
-        );
+        const pno = await createParcelFromOrder(order, page.id);
         setParcelNo(pno);
       } catch (e) { console.warn('สร้างพัสดุไม่สำเร็จ:', e); }
       await trackEvent(page.id, 'Purchase', { value: selPkg.price, package: selPkg.name });
