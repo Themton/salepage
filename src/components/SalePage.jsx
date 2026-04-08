@@ -85,30 +85,9 @@ export default function SalePage() {
         package_name: selPkg.name,
         total: selPkg.price,
         status: 'pending',
-        meta: { pkg: pkg, subdistrict: form.subdistrict, district: form.district, province: form.province, zip: form.zip, fbline: form.fbline, remark: form.remark },
+        meta: { pkg, subdistrict: form.subdistrict, district: form.district, province: form.province, zip: form.zip, addr: form.addr, fbline: form.fbline, remark: form.remark },
       };
-      // Try adding extra columns (won't fail if they don't exist)
-      try {
-        orderData.customer_subdistrict = form.subdistrict;
-        orderData.customer_district = form.district;
-        orderData.customer_province = form.province;
-        orderData.customer_zip = form.zip;
-        orderData.customer_fb_line = form.fbline;
-        orderData.remark = form.remark;
-      } catch {}
-      let order;
-      try {
-        order = await createOrder(orderData);
-      } catch {
-        // Fallback: remove extra columns and retry
-        delete orderData.customer_subdistrict;
-        delete orderData.customer_district;
-        delete orderData.customer_province;
-        delete orderData.customer_zip;
-        delete orderData.customer_fb_line;
-        delete orderData.remark;
-        order = await createOrder(orderData);
-      }
+      const order = await createOrder(orderData);
       // สร้างเลขพัสดุ
       try {
         const pno = await createParcelFromOrder(order, page.id);
