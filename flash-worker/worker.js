@@ -8,6 +8,14 @@ const FLASH_API_KEY = "0bc50ae59546"; // ← ใส่ key เต็มตรง
 const FLASH_API_URL = "https://open-api-training.flashexpress.com"; // Training ENV
 
 // === Helpers ===
+// Default sender info — แก้ตรงนี้
+const DEFAULT_SENDER = {
+  name: "",      // ← ใส่ชื่อผู้ส่ง
+  phone: "",     // ← ใส่เบอร์ผู้ส่ง
+  address: "",   // ← ใส่ที่อยู่ผู้ส่ง
+  postal: "",    // ← ใส่รหัสไปรษณีย์ผู้ส่ง
+};
+
 async function sha256(msg) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(msg));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("").toUpperCase();
@@ -70,10 +78,10 @@ export default {
           const p = {
             outTradeNo: data.outTradeNo || "",
             expressCategory: data.codAmount > 0 ? 1 : 0,
-            srcName: data.srcName || "",
-            srcPhone: data.srcPhone || "",
-            srcDetailAddress: data.srcAddress || "",
-            srcPostalCode: data.srcPostal || "",
+            srcName: data.srcName || DEFAULT_SENDER.name,
+            srcPhone: data.srcPhone || DEFAULT_SENDER.phone,
+            srcDetailAddress: data.srcAddress || DEFAULT_SENDER.address,
+            srcPostalCode: data.srcPostal || DEFAULT_SENDER.postal,
             dstName: data.dstName || "",
             dstPhone: data.dstPhone || "",
             dstProvinceName: data.dstProvince || "",

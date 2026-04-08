@@ -88,10 +88,42 @@ export default function SalePage() {
         meta: { pkg, subdistrict: form.subdistrict, district: form.district, province: form.province, zip: form.zip, addr: form.addr, fbline: form.fbline, remark: form.remark },
       };
       const order = await createOrder(orderData);
-      // สร้างเลขพัสดุ
+      // สร้างเลขพัสดุ + เลข Flash TH อัตโนมัติ
       try {
-        const pno = await createParcelFromOrder(order, page.id);
-        setParcelNo(pno?.parcel_no || pno);
+        const parcel = await createParcelFromOrder(order, page.id);
+        // เรียก Flash API สร้างเลข TH
+        const PROXY = import.meta.env.VITE_FLASH_PROXY;
+        if (PROXY && parcel?.parcel_no) {
+          try {
+            const resp = await fetch(PROXY, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'createOrder',
+                outTradeNo: parcel.parcel_no,
+                dstName: form.name,
+                dstPhone: form.tel,
+                dstProvince: form.province,
+                dstDistrict: form.district,
+                dstSubdistrict: form.subdistrict,
+                dstPostal: form.zip,
+                dstAddress: `${form.addr} ${form.subdistrict} ${form.district} ${form.province}`.trim(),
+                weight: 1000,
+                codAmount: selPkg.price || 0,
+              }),
+            });
+            const result = await resp.json();
+            if (result.code === 1 && result.data?.pno) {
+              const { updateParcelFlash } = await import('../lib/supabase');
+              await updateParcelFlash(parcel.id, result.data.pno, result.data.sortCode || '', result.data.dstStoreName || '', result.data);
+              setParcelNo(result.data.pno);
+            } else {
+              setParcelNo(parcel.parcel_no);
+            }
+          } catch { setParcelNo(parcel.parcel_no); }
+        } else {
+          setParcelNo(parcel?.parcel_no || '');
+        }
       } catch (e) { console.warn('สร้างพัสดุไม่สำเร็จ:', e); }
       await trackEvent(page.id, 'Purchase', { value: selPkg.price, package: selPkg.name });
       fbTrack('Purchase', { value: selPkg.price, currency: 'THB', content_name: p.name });
