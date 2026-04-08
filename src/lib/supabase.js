@@ -125,6 +125,7 @@ const generateParcelNo = async () => {
 
 export const createParcelFromOrder = async (order, pageId) => {
   const parcelNo = await generateParcelNo();
+  const m = order.meta || {};
   const { data, error } = await supabase.from('sp_parcels').insert({
     order_id: order.id,
     page_id: pageId,
@@ -133,10 +134,10 @@ export const createParcelFromOrder = async (order, pageId) => {
     receiver_name: order.customer_name || '',
     receiver_phone: order.customer_tel || '',
     receiver_address: order.customer_addr || '',
-    receiver_subdistrict: order.customer_subdistrict || '',
-    receiver_district: order.customer_district || '',
-    receiver_province: order.customer_province || '',
-    receiver_postal: order.customer_zip || '',
+    receiver_subdistrict: order.customer_subdistrict || m.subdistrict || '',
+    receiver_district: order.customer_district || m.district || '',
+    receiver_province: order.customer_province || m.province || '',
+    receiver_postal: order.customer_zip || m.zip || '',
     cod_amount: order.total || 0,
   }).select().single();
   if (error) throw error;

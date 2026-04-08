@@ -81,19 +81,34 @@ export default function SalePage() {
         page_id: page.id,
         customer_name: form.name,
         customer_tel: form.tel,
-        customer_addr: form.addr,
-        customer_subdistrict: form.subdistrict,
-        customer_district: form.district,
-        customer_province: form.province,
-        customer_zip: form.zip,
-        customer_fb_line: form.fbline,
-        remark: form.remark,
+        customer_addr: `${form.addr} ${form.subdistrict} ${form.district} ${form.province} ${form.zip}`.trim(),
         package_name: selPkg.name,
         total: selPkg.price,
         status: 'pending',
-        meta: { pkg: pkg },
+        meta: { pkg: pkg, subdistrict: form.subdistrict, district: form.district, province: form.province, zip: form.zip, fbline: form.fbline, remark: form.remark },
       };
-      const order = await createOrder(orderData);
+      // Try adding extra columns (won't fail if they don't exist)
+      try {
+        orderData.customer_subdistrict = form.subdistrict;
+        orderData.customer_district = form.district;
+        orderData.customer_province = form.province;
+        orderData.customer_zip = form.zip;
+        orderData.customer_fb_line = form.fbline;
+        orderData.remark = form.remark;
+      } catch {}
+      let order;
+      try {
+        order = await createOrder(orderData);
+      } catch {
+        // Fallback: remove extra columns and retry
+        delete orderData.customer_subdistrict;
+        delete orderData.customer_district;
+        delete orderData.customer_province;
+        delete orderData.customer_zip;
+        delete orderData.customer_fb_line;
+        delete orderData.remark;
+        order = await createOrder(orderData);
+      }
       // สร้างเลขพัสดุ
       try {
         const pno = await createParcelFromOrder(order, page.id);
