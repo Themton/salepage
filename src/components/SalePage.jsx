@@ -91,7 +91,7 @@ export default function SalePage() {
       // สร้างเลขพัสดุ
       try {
         const pno = await createParcelFromOrder(order, page.id);
-        setParcelNo(pno);
+        setParcelNo(pno?.parcel_no || pno);
       } catch (e) { console.warn('สร้างพัสดุไม่สำเร็จ:', e); }
       await trackEvent(page.id, 'Purchase', { value: selPkg.price, package: selPkg.name });
       fbTrack('Purchase', { value: selPkg.price, currency: 'THB', content_name: p.name });
