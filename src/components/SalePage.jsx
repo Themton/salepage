@@ -99,17 +99,19 @@ export default function SalePage() {
 
   const selPkg = p.packages?.[pkg];
 
+  const ss = p.successShow || {};
+
   if (done) return (
     <div style={{ minHeight: '100vh', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Noto Sans Thai', sans-serif", padding: 20 }}>
       <div className="fade-in" style={{ textAlign: 'center', maxWidth: 380 }}>
         <div style={{ width: 70, height: 70, borderRadius: '50%', background: '#e3f2fd', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 32 }}>✅</div>
-        <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>สั่งซื้อสำเร็จ!</h2>
-        <p style={{ color: '#777', fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>ขอบคุณค่ะ ทีมงานจะโทรยืนยัน<br />ภายใน 30 นาที</p>
+        <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>{p.successTitle || 'สั่งซื้อสำเร็จ!'}</h2>
+        <p style={{ color: '#777', fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>{(p.successMsg || 'ขอบคุณค่ะ ทีมงานจะโทรยืนยัน\nภายใน 30 นาที').split('\n').map((line, i) => <span key={i}>{line}<br /></span>)}</p>
         <div style={{ background: '#fff', borderRadius: 14, padding: 18, border: '1px solid #eee', textAlign: 'left' }}>
-          <div style={{ fontSize: 14, fontWeight: 600 }}>{selPkg?.name} — ฿{selPkg?.price?.toLocaleString()}</div>
-          <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>👤 {form.name} · 📞 {form.tel}</div>
-          <div style={{ fontSize: 12, color: '#888' }}>📍 {form.addr} {form.subdistrict} {form.district} {form.zip}</div>
-          {form.remark && <div style={{ fontSize: 12, color: '#888' }}>📝 {form.remark}</div>}
+          {ss.showPkg !== false && <div style={{ fontSize: 14, fontWeight: 600 }}>{selPkg?.name} — ฿{selPkg?.price?.toLocaleString()}</div>}
+          {(ss.showName !== false || ss.showPhone !== false) && <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>{ss.showName !== false && `👤 ${form.name}`}{ss.showName !== false && ss.showPhone !== false && ' · '}{ss.showPhone !== false && `📞 ${form.tel}`}</div>}
+          {ss.showAddr !== false && <div style={{ fontSize: 12, color: '#888' }}>📍 {form.addr} {form.subdistrict} {form.district} {form.zip}</div>}
+          {ss.showRemark !== false && form.remark && <div style={{ fontSize: 12, color: '#888' }}>📝 {form.remark}</div>}
         </div>
       </div>
     </div>

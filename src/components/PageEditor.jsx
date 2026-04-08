@@ -262,7 +262,7 @@ export default function PageEditor() {
       const pg = await getPageById(pageId);
       if (!pg) return nav('/admin');
       setPage(pg);
-      setF({ name: pg.name, slug: pg.slug, pixel_id: pg.pixel_id || '', is_active: pg.is_active, tagline: pg.settings?.tagline || '', subtitle: pg.settings?.subtitle || '', flashSale: pg.settings?.flashSale || { enabled: false, endTime: '' } });
+      setF({ name: pg.name, slug: pg.slug, pixel_id: pg.pixel_id || '', is_active: pg.is_active, tagline: pg.settings?.tagline || '', subtitle: pg.settings?.subtitle || '', flashSale: pg.settings?.flashSale || { enabled: false, endTime: '' }, successTitle: pg.settings?.successTitle || '', successMsg: pg.settings?.successMsg || '', successShow: pg.settings?.successShow || {} });
       setBlocks(settingsToBlocks(pg.settings || {}));
       const [o, ev, cu] = await Promise.all([getOrders(pageId), getEventStats(pageId), getCustomers(pageId)]);
       setOrders(o); setEvents(ev); setCusts(cu);
@@ -271,7 +271,7 @@ export default function PageEditor() {
 
   const doSave = async () => {
     setSaving(true);
-    const settings = { ...blocksToSettings(blocks), tagline: f.tagline, subtitle: f.subtitle, flashSale: f.flashSale };
+    const settings = { ...blocksToSettings(blocks), tagline: f.tagline, subtitle: f.subtitle, flashSale: f.flashSale, successTitle: f.successTitle, successMsg: f.successMsg, successShow: f.successShow };
     try {
       await updatePage(pageId, { name: f.name, slug: f.slug, pixel_id: f.pixel_id, is_active: f.is_active, settings });
       showToast('✅ บันทึกสำเร็จ');
@@ -380,6 +380,31 @@ export default function PageEditor() {
                 </button>
               </div>
               {f.flashSale?.enabled && <input type="datetime-local" value={f.flashSale?.endTime || ''} onChange={e => setF({ ...f, flashSale: { ...f.flashSale, endTime: e.target.value } })} style={{ ...inp, marginTop: 10 }} />}
+            </div>
+
+            {/* ═══ SUCCESS PAGE ═══ */}
+            <div style={{ background: '#fff', borderRadius: 12, padding: 16, marginBottom: 10, border: '1px solid #eee' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>✅ หน้ายืนยันสั่งซื้อสำเร็จ</div>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 11, color: '#999', marginBottom: 3 }}>หัวข้อ</div>
+                <input value={f.successTitle || ''} onChange={e => setF({ ...f, successTitle: e.target.value })} placeholder="สั่งซื้อสำเร็จ!" style={inp} />
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 11, color: '#999', marginBottom: 3 }}>ข้อความ (แยกบรรทัดด้วย \n)</div>
+                <textarea value={f.successMsg || ''} onChange={e => setF({ ...f, successMsg: e.target.value })} placeholder="ขอบคุณค่ะ ทีมงานจะโทรยืนยัน&#10;ภายใน 30 นาที" rows={3}
+                  style={{ ...inp, resize: 'vertical' }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: '#999', marginBottom: 3 }}>แสดงข้อมูลลูกค้า</div>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {[['showName', '👤 ชื่อ'], ['showPhone', '📞 เบอร์'], ['showAddr', '📍 ที่อยู่'], ['showPkg', '📦 แพ็กเกจ'], ['showRemark', '📝 หมายเหตุ']].map(([k, label]) => (
+                    <label key={k} style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={f.successShow?.[k] !== false} onChange={e => setF({ ...f, successShow: { ...f.successShow, [k]: e.target.checked } })} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* ═══ CONTENT BLOCKS ═══ */}
