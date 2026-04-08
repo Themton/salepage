@@ -262,7 +262,7 @@ export default function PageEditor() {
       const pg = await getPageById(pageId);
       if (!pg) return nav('/admin');
       setPage(pg);
-      setF({ name: pg.name, slug: pg.slug, pixel_id: pg.pixel_id || '', is_active: pg.is_active, tagline: pg.settings?.tagline || '', subtitle: pg.settings?.subtitle || '', flashSale: pg.settings?.flashSale || { enabled: false, endTime: '' } });
+      setF({ name: pg.name, slug: pg.slug, pixel_id: pg.pixel_id || '', is_active: pg.is_active, tagline: pg.settings?.tagline || '', subtitle: pg.settings?.subtitle || '', flashSale: pg.settings?.flashSale || { enabled: false, endTime: '' }, senderInfo: pg.settings?.senderInfo || { name: '', phone: '', address: '', province: '', district: '', subdistrict: '', postal: '' } });
       setBlocks(settingsToBlocks(pg.settings || {}));
       const [o, ev, cu] = await Promise.all([getOrders(pageId), getEventStats(pageId), getCustomers(pageId)]);
       setOrders(o); setEvents(ev); setCusts(cu);
@@ -271,7 +271,7 @@ export default function PageEditor() {
 
   const doSave = async () => {
     setSaving(true);
-    const settings = { ...blocksToSettings(blocks), tagline: f.tagline, subtitle: f.subtitle, flashSale: f.flashSale };
+    const settings = { ...blocksToSettings(blocks), tagline: f.tagline, subtitle: f.subtitle, flashSale: f.flashSale, senderInfo: f.senderInfo };
     try {
       await updatePage(pageId, { name: f.name, slug: f.slug, pixel_id: f.pixel_id, is_active: f.is_active, settings });
       showToast('✅ บันทึกสำเร็จ');
@@ -382,6 +382,21 @@ export default function PageEditor() {
               {f.flashSale?.enabled && <input type="datetime-local" value={f.flashSale?.endTime || ''} onChange={e => setF({ ...f, flashSale: { ...f.flashSale, endTime: e.target.value } })} style={{ ...inp, marginTop: 10 }} />}
             </div>
 
+            {/* Sender Info for Flash Express */}
+            <div style={{ background: '#fff', borderRadius: 12, padding: 16, marginBottom: 12, border: '1px solid #eee' }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#333', marginBottom: 12 }}>📦 ข้อมูลผู้ส่ง (สร้างเลขพัสดุอัตโนมัติ)</div>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <div style={{ flex: 1 }}><div style={{ fontSize: 11, color: '#999', marginBottom: 3 }}>ชื่อร้าน/ผู้ส่ง</div><input value={f.senderInfo?.name || ''} onChange={e => setF({ ...f, senderInfo: { ...f.senderInfo, name: e.target.value } })} style={inp} /></div>
+                <div style={{ flex: 1 }}><div style={{ fontSize: 11, color: '#999', marginBottom: 3 }}>เบอร์โทร</div><input value={f.senderInfo?.phone || ''} onChange={e => setF({ ...f, senderInfo: { ...f.senderInfo, phone: e.target.value } })} style={inp} /></div>
+              </div>
+              <div style={{ marginBottom: 8 }}><div style={{ fontSize: 11, color: '#999', marginBottom: 3 }}>ที่อยู่</div><input value={f.senderInfo?.address || ''} onChange={e => setF({ ...f, senderInfo: { ...f.senderInfo, address: e.target.value } })} style={inp} /></div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ flex: 1 }}><div style={{ fontSize: 11, color: '#999', marginBottom: 3 }}>จังหวัด</div><input value={f.senderInfo?.province || ''} onChange={e => setF({ ...f, senderInfo: { ...f.senderInfo, province: e.target.value } })} style={inp} /></div>
+                <div style={{ flex: 1 }}><div style={{ fontSize: 11, color: '#999', marginBottom: 3 }}>รหัสไปรษณีย์</div><input value={f.senderInfo?.postal || ''} onChange={e => setF({ ...f, senderInfo: { ...f.senderInfo, postal: e.target.value } })} style={inp} /></div>
+              </div>
+              <div style={{ fontSize: 11, color: '#bbb', marginTop: 8 }}>💡 กรอกข้อมูลผู้ส่ง → ลูกค้าสั่งซื้อ → ระบบสร้างเลขพัสดุใน fx_parcels อัตโนมัติ</div>
+            </div>
+
             {/* ═══ CONTENT BLOCKS ═══ */}
             {blocks.map((block, i) => {
               const bt = blockLabel(block.type);
@@ -452,6 +467,7 @@ export default function PageEditor() {
                 </div>
                 <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2, color: '#333' }}>{o.customer_name}</div>
                 <div style={{ fontSize: 12, color: '#888' }}>📞 {o.customer_tel} · 📦 {o.package_name}</div>
+                {o.parcel_no && <div style={{ fontSize: 12, color: '#2e86de', fontWeight: 600 }}>🏷 {o.parcel_no}</div>}
                 <div style={{ fontSize: 12, color: '#aaa', marginBottom: 2 }}>📍 {o.customer_addr} {o.customer_subdistrict} {o.customer_district} {o.customer_zip}</div>
                 {o.customer_fb_line && <div style={{ fontSize: 11, color: '#bbb' }}>💬 {o.customer_fb_line}</div>}
                 {o.remark && <div style={{ fontSize: 11, color: '#bbb', marginBottom: 4 }}>📝 {o.remark}</div>}

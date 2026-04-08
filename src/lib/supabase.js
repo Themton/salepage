@@ -112,3 +112,44 @@ export const deleteImage = async (url) => {
   const path = url.split(`${BUCKET}/`).pop();
   if (path) await supabase.storage.from(BUCKET).remove([path]);
 };
+
+// ── Flash Express Parcels Integration ──
+const generateParcelNo = async () => {
+  const today = new Date();
+  const dateStr = today.toISOString().slice(2, 10).replace(/-/g, ''); // 250408
+  const prefix = `SP-${dateStr}-`;
+  const { data } = await supabase.from('fx_parcels').select('parcel_no').like('parcel_no', `${prefix}%`).order('parcel_no', { ascending: false }).limit(1);
+  const lastSeq = data?.[0]?.parcel_no ? parseInt(data[0].parcel_no.split('-').pop()) : 0;
+  return `${prefix}${String(lastSeq + 1).padStart(4, '0')}`;
+};
+
+export const createParcelFromOrder = async (order, pageName, senderInfo = {}) => {
+  const parcelNo = await generateParcelNo();
+  const { data, error } = await supabase.from('fx_parcels').insert({
+    parcel_no: parcelNo,
+    sender_name: senderInfo.name || pageName || 'ร้านค้า',
+    sender_phone: senderInfo.phone || '',
+    sender_address: senderInfo.address || '',
+    sender_province: senderInfo.province || '',
+    sender_district: senderInfo.district || '',
+    sender_subdistrict: senderInfo.subdistrict || '',
+    sender_postal: senderInfo.postal || '',
+    receiver_name: order.customer_name,
+    receiver_phone: order.customer_tel,
+    receiver_address: order.customer_addr,
+    receiver_district: order.customer_district || '',
+    receiver_subdistrict: order.customer_subdistrict || '',
+    receiver_postal: order.customer_zip || '',
+    cod_enabled: true,
+    cod_amount: order.total || 0,
+    item_desc: order.package_name || '',
+    status: 'draft',
+    remark: order.remark || '',
+  }).select().single();
+  if (error) throw error;
+  // Update sp_orders with parcel_no
+  if (order.id) {
+    await supabase.from('sp_orders').update({ parcel_no: parcelNo }).eq('id', order.id);
+  }
+  return parcelNo;
+};
