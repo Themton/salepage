@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { getPageBySlug, createOrder, trackEvent, createParcelFromOrder } from '../lib/supabase';
+import { getPageBySlug, createOrder, trackEvent } from '../lib/supabase';
 
 const accent = '#2e86de', red = '#c0392b', bg = '#faf9f6', gold = '#c9953c';
 const pad = n => String(n).padStart(2, '0');
@@ -33,7 +33,6 @@ export default function SalePage() {
   const [form, setForm] = useState({ name: '', tel: '', addr: '', subdistrict: '', district: '', province: '', zip: '', fbline: '', remark: '' });
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
-  const [parcelNo, setParcelNo] = useState('');
   const [countdown, setCountdown] = useState(null);
   const [slideIdx, setSlideIdx] = useState(0);
   const [openFaq, setOpenFaq] = useState(null);
@@ -88,43 +87,6 @@ export default function SalePage() {
         meta: { pkg, subdistrict: form.subdistrict, district: form.district, province: form.province, zip: form.zip, addr: form.addr, fbline: form.fbline, remark: form.remark },
       };
       const order = await createOrder(orderData);
-      // สร้างเลขพัสดุ + เลข Flash TH อัตโนมัติ
-      try {
-        const parcel = await createParcelFromOrder(order, page.id);
-        // เรียก Flash API สร้างเลข TH
-        const PROXY = import.meta.env.VITE_FLASH_PROXY;
-        if (PROXY && parcel?.parcel_no) {
-          try {
-            const resp = await fetch(PROXY, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                action: 'createOrder',
-                outTradeNo: parcel.parcel_no,
-                dstName: form.name,
-                dstPhone: form.tel,
-                dstProvince: form.province,
-                dstDistrict: form.district,
-                dstSubdistrict: form.subdistrict,
-                dstPostal: form.zip,
-                dstAddress: `${form.addr} ${form.subdistrict} ${form.district} ${form.province}`.trim(),
-                weight: 1000,
-                codAmount: selPkg.price || 0,
-              }),
-            });
-            const result = await resp.json();
-            if (result.code === 1 && result.data?.pno) {
-              const { updateParcelFlash } = await import('../lib/supabase');
-              await updateParcelFlash(parcel.id, result.data.pno, result.data.sortCode || '', result.data.dstStoreName || '', result.data);
-              setParcelNo(result.data.pno);
-            } else {
-              setParcelNo(parcel.parcel_no);
-            }
-          } catch { setParcelNo(parcel.parcel_no); }
-        } else {
-          setParcelNo(parcel?.parcel_no || '');
-        }
-      } catch (e) { console.warn('สร้างพัสดุไม่สำเร็จ:', e); }
       await trackEvent(page.id, 'Purchase', { value: selPkg.price, package: selPkg.name });
       fbTrack('Purchase', { value: selPkg.price, currency: 'THB', content_name: p.name });
       setDone(true);
@@ -144,12 +106,6 @@ export default function SalePage() {
         <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>สั่งซื้อสำเร็จ!</h2>
         <p style={{ color: '#777', fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>ขอบคุณค่ะ ทีมงานจะโทรยืนยัน<br />ภายใน 30 นาที</p>
         <div style={{ background: '#fff', borderRadius: 14, padding: 18, border: '1px solid #eee', textAlign: 'left' }}>
-          {parcelNo && (
-            <div style={{ background: '#e3f2fd', borderRadius: 10, padding: '12px 14px', marginBottom: 12, textAlign: 'center' }}>
-              <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>เลขพัสดุ</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: accent, letterSpacing: 1 }}>{parcelNo}</div>
-            </div>
-          )}
           <div style={{ fontSize: 14, fontWeight: 600 }}>{selPkg?.name} — ฿{selPkg?.price?.toLocaleString()}</div>
           <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>👤 {form.name} · 📞 {form.tel}</div>
           <div style={{ fontSize: 12, color: '#888' }}>📍 {form.addr} {form.subdistrict} {form.district} {form.zip}</div>
