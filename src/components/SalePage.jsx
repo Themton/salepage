@@ -6,6 +6,25 @@ const accent = '#2e86de', red = '#c0392b', bg = '#faf9f6', gold = '#c9953c';
 const pad = n => String(n).padStart(2, '0');
 const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
 
+// ── Facebook Pixel ──
+function initPixel(pixelId) {
+  if (!pixelId || typeof window === 'undefined') return;
+  if (window.fbq) { window.fbq('init', pixelId); window.fbq('track', 'PageView'); return; }
+  const f = window.fbq = function() { f.callMethod ? f.callMethod.apply(f, arguments) : f.queue.push(arguments); };
+  f.push = f; f.loaded = true; f.version = '2.0'; f.queue = [];
+  const s = document.createElement('script'); s.async = true; s.src = 'https://connect.facebook.net/en_US/fbevents.js';
+  document.head.appendChild(s);
+  const n = document.createElement('noscript');
+  n.innerHTML = `<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1"/>`;
+  document.body.appendChild(n);
+  window.fbq('init', pixelId);
+  window.fbq('track', 'PageView');
+}
+
+function fbTrack(event, data = {}) {
+  if (window.fbq) window.fbq('track', event, data);
+}
+
 export default function SalePage() {
   const { slug } = useParams();
   const [page, setPage] = useState(null);
@@ -25,6 +44,7 @@ export default function SalePage() {
       if (p) {
         setPage(p);
         trackEvent(p.id, 'PageView', { slug });
+        initPixel(p.pixel_id);
       }
       setLoading(false);
     })();
@@ -65,6 +85,7 @@ export default function SalePage() {
         meta: { pkg: pkg },
       });
       await trackEvent(page.id, 'Purchase', { value: selPkg.price, package: selPkg.name });
+      fbTrack('Purchase', { value: selPkg.price, currency: 'THB', content_name: p.name });
       setDone(true);
     } catch (e) { alert('เกิดข้อผิดพลาด กรุณาลองใหม่'); }
     setSending(false);
