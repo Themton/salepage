@@ -30,7 +30,7 @@ export default function SalePage() {
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pkg, setPkg] = useState(1);
-  const [form, setForm] = useState({ name: '', tel: '', addr: '', subdistrict: '', district: '', zip: '', fbline: '', remark: '' });
+  const [form, setForm] = useState({ name: '', tel: '', addr: '', subdistrict: '', district: '', province: '', zip: '', fbline: '', remark: '' });
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
   const [parcelNo, setParcelNo] = useState('');
@@ -84,6 +84,7 @@ export default function SalePage() {
         customer_addr: form.addr,
         customer_subdistrict: form.subdistrict,
         customer_district: form.district,
+        customer_province: form.province,
         customer_zip: form.zip,
         customer_fb_line: form.fbline,
         remark: form.remark,
@@ -301,6 +302,8 @@ export default function SalePage() {
             </div>
 
             <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+              <input value={form.province} onChange={e => setForm({ ...form, province: e.target.value })} placeholder="จังหวัด"
+                style={{ flex: 1, boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
               <input value={form.zip} onChange={e => setForm({ ...form, zip: e.target.value })} placeholder="รหัสไปรษณีย์" type="tel"
                 style={{ flex: 1, boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
               <input value={form.fbline} onChange={e => setForm({ ...form, fbline: e.target.value })} placeholder="Facebook/Line (ไม่บังคับ)"

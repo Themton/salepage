@@ -135,6 +135,7 @@ export const createParcelFromOrder = async (order, pageId) => {
     receiver_address: order.customer_addr || '',
     receiver_subdistrict: order.customer_subdistrict || '',
     receiver_district: order.customer_district || '',
+    receiver_province: order.customer_province || '',
     receiver_postal: order.customer_zip || '',
     cod_amount: order.total || 0,
   }).select().single();
