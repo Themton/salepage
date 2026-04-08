@@ -242,11 +242,6 @@ export default function SalePage() {
                 style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 10, color: '#222' }} />
             ))}
 
-            <select value={pkg} onChange={e => setPkg(Number(e.target.value))}
-              style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 10, color: '#222' }}>
-              {p.packages?.map((pk, i) => <option key={i} value={i}>{pk.name} — ฿{pk.price}{pk.badge ? ` (${pk.badge.replace(/[^\w\sก-๙]/g, '').trim()})` : ''}</option>)}
-            </select>
-
             <textarea value={form.addr} onChange={e => setForm({ ...form, addr: e.target.value })} placeholder="ที่อยู่จัดส่ง *" rows={3}
               style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 14, color: '#222', resize: 'vertical' }} />
 
