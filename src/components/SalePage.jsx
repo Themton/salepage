@@ -71,6 +71,8 @@ export default function SalePage() {
 
   const submit = async () => {
     if (!form.name || !form.tel || !form.addr) return alert('กรุณากรอกข้อมูลให้ครบ');
+    const telClean = form.tel.replace(/\D/g, '');
+    if (telClean.length !== 10) return alert('เบอร์โทรศัพท์ต้องครบ 10 หลัก');
     setSending(true);
     const selPkg = p.packages?.[pkg] || p.packages?.[0] || { name: 'สินค้า', price: 0 };
     try {
@@ -263,11 +265,17 @@ export default function SalePage() {
             <h2 style={{ fontSize: 18, fontWeight: 800, textAlign: 'center', margin: '0 0 4px' }}>📋 กรอกข้อมูลสั่งซื้อ</h2>
             <p style={{ textAlign: 'center', fontSize: 12, color: '#999', marginBottom: 16 }}>เก็บเงินปลายทาง ส่งฟรีทั่วประเทศ</p>
 
-            {[['name', 'ชื่อ - นามสกุล *'], ['tel', 'เบอร์โทรศัพท์ * (10 หลัก)']].map(([k, ph]) => (
+            {[['name', 'ชื่อ - นามสกุล *']].map(([k, ph]) => (
               <input key={k} value={form[k]} onChange={e => setForm({ ...form, [k]: e.target.value })} placeholder={ph}
-                type={k === 'tel' ? 'tel' : 'text'}
                 style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 10, color: '#222' }} />
             ))}
+
+            <div style={{ position: 'relative', marginBottom: 10 }}>
+              <input value={form.tel} onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 10); setForm({ ...form, tel: v }); }}
+                placeholder="เบอร์โทรศัพท์ * (10 หลัก)" type="tel" maxLength={10}
+                style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: `1.5px solid ${form.tel && form.tel.length !== 10 ? '#e74c3c' : '#e0dcd4'}`, borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
+              <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: form.tel.length === 10 ? '#27ae60' : '#ccc' }}>{form.tel.length}/10</span>
+            </div>
 
             <textarea value={form.addr} onChange={e => setForm({ ...form, addr: e.target.value })} placeholder="ที่อยู่ * (บ้านเลขที่ ซอย ถนน)" rows={2}
               style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 10, color: '#222', resize: 'vertical' }} />
