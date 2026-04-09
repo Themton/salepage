@@ -81,7 +81,7 @@ export default function AdminDashboard() {
         '',
         o.total || 0,
         o.total || 0,
-        '',
+        `${o.package_name || ''} ฿${(o.total||0).toLocaleString()}`,
       ];
     });
     // Build CSV with BOM for Excel
