@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { getPageBySlug, createOrder, trackEvent } from '../lib/supabase';
 import addrData from '../lib/thaddr.json';
@@ -31,7 +31,7 @@ export default function SalePage() {
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pkg, setPkg] = useState(1);
-  const [form, setForm] = useState({ name: '', tel: '', addr: '', subdistrict: '', district: '', province: '', zip: '', fbline: '', remark: '' });
+  const [form, setForm] = useState({ name: '', tel: '', addr: '', subdistrict: '', district: '', province: '', zip: '' });
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
   const [addrSugg, setAddrSugg] = useState([]);
@@ -111,7 +111,7 @@ export default function SalePage() {
         package_name: selPkg.name,
         total: selPkg.price,
         status: 'pending',
-        meta: { pkg, subdistrict: form.subdistrict, district: form.district, province: form.province, zip: form.zip, addr: form.addr, fbline: form.fbline, remark: form.remark },
+        meta: { pkg, subdistrict: form.subdistrict, district: form.district, province: form.province, zip: form.zip, addr: form.addr },
       };
       const order = await createOrder(orderData);
       await trackEvent(page.id, 'Purchase', { value: selPkg.price, package: selPkg.name });

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPages, createPage, deletePage, getAllOrders, updateOrderStatus, supabase } from '../lib/supabase';
+import { getPages, createPage, deletePage, getAllOrders, supabase } from '../lib/supabase';
 import { DEFAULT_SETTINGS } from '../lib/defaults';
 
 const blue = '#2e86de', green = '#27ae60', red = '#e74c3c', bg = '#f5f6fa';
