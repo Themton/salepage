@@ -65,23 +65,33 @@ export default function AdminDashboard() {
   });
 
   const exportCSV = () => {
-    const headers = ['วันที่','ชื่อ','เบอร์โทร','ที่อยู่','สินค้า','ยอด','สถานะ','เซลเพจ'];
-    const rows = filteredOrders.map(o => [
-      new Date(o.created_at).toLocaleString('th-TH'),
-      o.customer_name,
-      o.customer_tel,
-      `"${(o.customer_addr||'').replace(/"/g,'""')}"`,
-      o.package_name,
-      o.total || 0,
-      statusL[o.status] || o.status,
-      o.sp_pages?.name || '',
-    ]);
+    // ProShip Flash format
+    const headers = ['MobileNo*\nเบอร์มือถือ','Name\nชื่อ','Address\nที่อยู่','SubDistrict\nตำบล','District\nอำเภอ','ZIP\nรหัส ปณ.','Customer FB/Line\nเฟส/ไลน์ลูกค้า','SalesChannel\nช่องทางจำหน่าย','SalesPerson\nชื่อแอดมิน','SalePrice\nราคาขาย','COD*\nยอดเก็บเงินปลายทาง','Remark\nหมายเหตุ'];
+    const rows = filteredOrders.map(o => {
+      const m = o.meta || {};
+      return [
+        o.customer_tel || '',
+        o.customer_name || '',
+        m.addr || o.customer_addr || '',
+        m.subdistrict || '',
+        m.district || '',
+        m.zip || '',
+        '',
+        o.sp_pages?.name || '',
+        '',
+        o.total || 0,
+        o.total || 0,
+        '',
+      ];
+    });
+    // Build CSV with BOM for Excel
     const bom = '\uFEFF';
-    const csv = bom + [headers, ...rows].map(r => r.join(',')).join('\n');
+    const warning = 'ช่องสีแดงต้องกรอก ช่องสีขาวไม่จำเป็น';
+    const csv = bom + warning + '\n' + [headers.map(h => `"${h}"`), ...rows.map(r => r.map(c => typeof c === 'string' ? `"${c.replace(/"/g,'""')}"` : c))].map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `orders-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    a.href = url; a.download = `ProShip-Flash-${new Date().toISOString().slice(0,10)}.csv`; a.click();
     URL.revokeObjectURL(url);
     showToast('📥 Export สำเร็จ');
   };
@@ -214,7 +224,7 @@ export default function AdminDashboard() {
                     style={{ background: statusFilter === v ? blue : '#f5f5f5', color: statusFilter === v ? '#fff' : '#666', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{l}</button>
                 ))}
               </div>
-              <button onClick={exportCSV} style={{ background: green, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>📥 Export CSV</button>
+              <button onClick={exportCSV} style={{ background: green, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>📥 Export ProShip</button>
             </div>
             <div style={{ fontSize: 12, color: '#999', marginTop: 8 }}>แสดง {filteredOrders.length}/{orders.length} รายการ · ยอดรวม ฿{filteredRev.toLocaleString()}</div>
           </div>
