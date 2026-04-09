@@ -95,6 +95,7 @@ export default function SalePage() {
     if (!form.name || !form.tel || !form.addr) return alert('กรุณากรอกข้อมูลให้ครบ');
     const telClean = form.tel.replace(/\D/g, '');
     if (telClean.length !== 10) return alert('เบอร์โทรศัพท์ต้องครบ 10 หลัก');
+    if (!telClean.startsWith('0')) return alert('เบอร์โทรต้องขึ้นต้นด้วย 0');
     if (!form.zip || form.zip.length !== 5) return alert('กรุณากรอกรหัสไปรษณีย์ 5 หลัก');
     if (!addrData.some(r => String(r[0]) === form.zip)) return alert('รหัสไปรษณีย์ไม่ถูกต้อง กรุณาตรวจสอบ');
     if (!form.subdistrict || !form.district || !form.province) return alert('กรุณากรอกตำบล อำเภอ และจังหวัดให้ครบ');
@@ -296,8 +297,17 @@ export default function SalePage() {
             <div style={{ position: 'relative', marginBottom: 10 }}>
               <input value={form.tel} onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 10); setForm({ ...form, tel: v }); }}
                 placeholder="เบอร์โทรศัพท์ * (10 หลัก)" type="tel" maxLength={10}
-                style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: `1.5px solid ${form.tel && form.tel.length !== 10 ? '#e74c3c' : '#e0dcd4'}`, borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
-              <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: form.tel.length === 10 ? '#27ae60' : '#ccc' }}>{form.tel.length}/10</span>
+                style={{ width: '100%', boxSizing: 'border-box', background: form.tel && (form.tel.length !== 10 || !form.tel.startsWith('0')) ? '#fff5f5' : '#faf9f6', border: `1.5px solid ${form.tel && (form.tel.length !== 10 || !form.tel.startsWith('0')) ? '#e74c3c' : form.tel.length === 10 ? '#27ae60' : '#e0dcd4'}`, borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
+              <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: form.tel.length === 10 && form.tel.startsWith('0') ? '#27ae60' : '#ccc' }}>{form.tel.length === 10 && form.tel.startsWith('0') ? '✅' : `${form.tel.length}/10`}</span>
+              {form.tel && form.tel.length > 0 && !form.tel.startsWith('0') && (
+                <div style={{ fontSize: 12, color: '#e74c3c', marginTop: 4, fontWeight: 600 }}>⚠️ เบอร์โทรต้องขึ้นต้นด้วย 0</div>
+              )}
+              {form.tel && form.tel.length > 0 && form.tel.length < 10 && form.tel.startsWith('0') && (
+                <div style={{ fontSize: 12, color: '#e67e22', marginTop: 4 }}>⚠️ เบอร์ไม่ครบ กรุณากรอกให้ครบ 10 หลัก</div>
+              )}
+              {form.tel.length === 10 && form.tel.startsWith('0') && (
+                <div style={{ fontSize: 12, color: '#27ae60', marginTop: 4 }}>✅ เบอร์โทรถูกต้อง</div>
+              )}
             </div>
 
             <textarea value={form.addr} onChange={e => setForm({ ...form, addr: e.target.value })} placeholder="ที่อยู่ * (บ้านเลขที่ ซอย ถนน)" rows={2}
