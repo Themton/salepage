@@ -283,6 +283,17 @@ export default function AdminDashboard() {
           <div style={{ background: '#fff', borderRadius: 12, padding: 16, marginBottom: 16, border: '1px solid #eee' }}>
             <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 ค้นหา ชื่อ/เบอร์/ที่อยู่" style={{ ...inp, width: 220 }} />
+              <div style={{ display: 'flex', gap: 4 }}>
+                {[['วันนี้', 0], ['เมื่อวาน', 1], ['ทั้งหมด', -1]].map(([label, d]) => {
+                  const isActive = d === -1 ? (!dateFrom && !dateTo) : (dateFrom === (d === 0 ? today() : (() => { const t = new Date(); t.setDate(t.getDate() - 1); return t.toISOString().slice(0,10); })()) && dateTo === dateFrom);
+                  return (
+                    <button key={label} onClick={() => {
+                      if (d === -1) { setDateFrom(''); setDateTo(''); }
+                      else { const t = new Date(); t.setDate(t.getDate() - d); const ds = t.toISOString().slice(0,10); setDateFrom(ds); setDateTo(ds); }
+                    }} style={{ background: isActive ? blue : '#f5f5f5', color: isActive ? '#fff' : '#666', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{label}</button>
+                  );
+                })}
+              </div>
               <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                 <span style={{ fontSize: 12, color: '#999' }}>จาก</span>
                 <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ ...inp }} />
