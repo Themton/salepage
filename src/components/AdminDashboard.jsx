@@ -33,6 +33,7 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(new Set());
   const [pageFilter, setPageFilter] = useState('all');
+  const [editModal, setEditModal] = useState(null);
 
   const showToast = msg => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
@@ -76,6 +77,59 @@ export default function AdminDashboard() {
     setOrders(prev => prev.map(o => ids.includes(o.id) ? { ...o, status: 'exported' } : o));
     setSelected(new Set());
     showToast(`✅ เปลี่ยนสถานะ ${ids.length} รายการเป็น Export แล้ว`);
+  };
+
+  const handleDeleteOrder = async (id) => {
+    if (!confirm('ลบออเดอร์นี้?')) return;
+    await supabase.from('sp_orders').delete().eq('id', id);
+    setOrders(prev => prev.filter(o => o.id !== id));
+    setSelected(prev => { const s = new Set(prev); s.delete(id); return s; });
+    showToast('🗑 ลบแล้ว');
+  };
+
+  const bulkDelete = async () => {
+    const ids = [...selected];
+    if (!ids.length) return;
+    if (!confirm(`ลบ ${ids.length} ออเดอร์?`)) return;
+    for (const id of ids) await supabase.from('sp_orders').delete().eq('id', id);
+    setOrders(prev => prev.filter(o => !ids.includes(o.id)));
+    setSelected(new Set());
+    showToast(`🗑 ลบ ${ids.length} รายการ`);
+  };
+
+  const openEdit = (o) => {
+    const m = o.meta || {};
+    setEditModal({
+      id: o.id,
+      customer_name: o.customer_name || '',
+      customer_tel: o.customer_tel || '',
+      customer_addr: m.addr || o.customer_addr || '',
+      subdistrict: m.subdistrict || '',
+      district: m.district || '',
+      province: m.province || '',
+      zip: m.zip || '',
+      package_name: o.package_name || '',
+      total: o.total || 0,
+      status: o.status || 'pending',
+    });
+  };
+
+  const saveEdit = async () => {
+    const e = editModal;
+    if (!e) return;
+    const updates = {
+      customer_name: e.customer_name,
+      customer_tel: e.customer_tel,
+      customer_addr: `${e.customer_addr} ${e.subdistrict} ${e.district} ${e.province} ${e.zip}`.trim(),
+      package_name: e.package_name,
+      total: Number(e.total),
+      status: e.status,
+      meta: { addr: e.customer_addr, subdistrict: e.subdistrict, district: e.district, province: e.province, zip: e.zip },
+    };
+    await supabase.from('sp_orders').update(updates).eq('id', e.id);
+    setOrders(prev => prev.map(o => o.id === e.id ? { ...o, ...updates } : o));
+    setEditModal(null);
+    showToast('✅ แก้ไขแล้ว');
   };
 
   // Filters
@@ -249,8 +303,9 @@ export default function AdminDashboard() {
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
                 {selected.size > 0 && <>
-                  <button onClick={bulkSetExported} style={{ ...btnS('#8e44ad'), fontSize: 12 }}>✅ เปลี่ยนเป็น Export แล้ว ({selected.size})</button>
+                  <button onClick={bulkSetExported} style={{ ...btnS('#8e44ad'), fontSize: 12 }}>✅ Export แล้ว ({selected.size})</button>
                   <button onClick={() => exportProShip(true)} style={{ ...btnS(green), fontSize: 12 }}>📥 Export ที่เลือก ({selected.size})</button>
+                  <button onClick={bulkDelete} style={{ ...btnS(red), fontSize: 12 }}>🗑 ลบ ({selected.size})</button>
                 </>}
                 <button onClick={() => exportProShip(false)} style={{ ...btnS('#333'), fontSize: 12 }}>📥 Export ทั้งหมด ({filteredOrders.length})</button>
               </div>
@@ -275,6 +330,7 @@ export default function AdminDashboard() {
                   <th style={{ padding: '12px 10px', textAlign: 'right', fontWeight: 700, color: '#555' }}>ยอด</th>
                   <th style={{ padding: '12px 10px', textAlign: 'center', fontWeight: 700, color: '#555' }}>สถานะ</th>
                   <th style={{ padding: '12px 10px', textAlign: 'left', fontWeight: 700, color: '#555' }}>เซลเพจ</th>
+                  <th style={{ padding: '12px 10px', textAlign: 'center', fontWeight: 700, color: '#555' }}>จัดการ</th>
                 </tr>
               </thead>
               <tbody>
@@ -307,6 +363,10 @@ export default function AdminDashboard() {
                         </select>
                       </td>
                       <td style={{ padding: '10px', fontSize: 11, color: blue }}>{o.sp_pages?.name || ''}</td>
+                      <td style={{ padding: '10px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                        <button onClick={() => openEdit(o)} style={{ background: '#e3f2fd', color: blue, border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, marginRight: 4 }}>✏️</button>
+                        <button onClick={() => handleDeleteOrder(o.id)} style={{ background: '#ffebee', color: red, border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>🗑</button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -316,6 +376,51 @@ export default function AdminDashboard() {
           </div>
         </div>)}
       </div>
+
+      {/* Edit Order Modal */}
+      {editModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          onClick={() => setEditModal(null)}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: 480, maxHeight: '85vh', overflow: 'auto' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>✏️ แก้ไขออเดอร์</div>
+              <button onClick={() => setEditModal(null)} style={{ ...btnS('#f5f5f5', '#999'), fontSize: 16 }}>✕</button>
+            </div>
+            {[
+              ['customer_name', '👤 ชื่อ'],
+              ['customer_tel', '📞 เบอร์โทร'],
+              ['customer_addr', '🏠 ที่อยู่'],
+              ['subdistrict', '📍 ตำบล/แขวง'],
+              ['district', '🏘 อำเภอ/เขต'],
+              ['province', '🗺 จังหวัด'],
+              ['zip', '📮 รหัสไปรษณีย์'],
+              ['package_name', '📦 สินค้า'],
+            ].map(([k, label]) => (
+              <div key={k} style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>{label}</div>
+                <input value={editModal[k] || ''} onChange={e => setEditModal({ ...editModal, [k]: e.target.value })} style={{ ...inp, width: '100%' }} />
+              </div>
+            ))}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>💰 ยอด (บาท)</div>
+                <input type="number" value={editModal.total} onChange={e => setEditModal({ ...editModal, total: e.target.value })} style={{ ...inp, width: '100%' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>สถานะ</div>
+                <select value={editModal.status} onChange={e => setEditModal({ ...editModal, status: e.target.value })} style={{ ...inp, width: '100%' }}>
+                  {Object.entries(statusL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+              <button onClick={() => setEditModal(null)} style={{ ...btnS('#f5f5f5', '#999'), flex: 1, border: '1px solid #ddd' }}>ยกเลิก</button>
+              <button onClick={saveEdit} style={{ ...btnS(blue), flex: 1 }}>💾 บันทึก</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
