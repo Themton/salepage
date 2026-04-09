@@ -137,7 +137,6 @@ export default function SalePage() {
           {ss.showPkg !== false && <div style={{ fontSize: 14, fontWeight: 600 }}>{selPkg?.name} — ฿{selPkg?.price?.toLocaleString()}</div>}
           {(ss.showName !== false || ss.showPhone !== false) && <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>{ss.showName !== false && `👤 ${form.name}`}{ss.showName !== false && ss.showPhone !== false && ' · '}{ss.showPhone !== false && `📞 ${form.tel}`}</div>}
           {ss.showAddr !== false && <div style={{ fontSize: 12, color: '#888' }}>📍 {form.addr} {form.subdistrict} {form.district} {form.zip}</div>}
-          {ss.showRemark !== false && form.remark && <div style={{ fontSize: 12, color: '#888' }}>📝 {form.remark}</div>}
         </div>
       </div>
     </div>
@@ -345,14 +344,6 @@ export default function SalePage() {
                 )}
               </div>
             </div>
-
-            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-              <input value={form.fbline} onChange={e => setForm({ ...form, fbline: e.target.value })} placeholder="Facebook/Line (ไม่บังคับ)"
-                style={{ flex: 1, boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', color: '#222' }} />
-            </div>
-
-            <input value={form.remark} onChange={e => setForm({ ...form, remark: e.target.value })} placeholder="หมายเหตุ (ไม่บังคับ)"
-              style={{ width: '100%', boxSizing: 'border-box', background: '#faf9f6', border: '1.5px solid #e0dcd4', borderRadius: 10, padding: '13px 16px', fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 14, color: '#222' }} />
 
             {/* ── สรุปยอดชำระ ── */}
             {selPkg && (

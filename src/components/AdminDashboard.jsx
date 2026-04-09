@@ -19,6 +19,10 @@ export default function AdminDashboard() {
   const [newForm, setNewForm] = useState({ name: '', slug: '' });
   const [tab, setTab] = useState('pages');
   const [toast, setToast] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState('');
 
   const showToast = msg => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
@@ -47,6 +51,42 @@ export default function AdminDashboard() {
 
   const totalRev = orders.filter(o => o.status !== 'cancel').reduce((s, o) => s + (o.total || 0), 0);
   const pendingCount = orders.filter(o => o.status === 'pending').length;
+
+  // Filtered orders
+  const filteredOrders = orders.filter(o => {
+    if (statusFilter !== 'all' && o.status !== statusFilter) return false;
+    if (dateFrom) { const d = new Date(o.created_at); if (d < new Date(dateFrom)) return false; }
+    if (dateTo) { const d = new Date(o.created_at); if (d > new Date(dateTo + 'T23:59:59')) return false; }
+    if (search) {
+      const s = search.toLowerCase();
+      if (!(o.customer_name||'').toLowerCase().includes(s) && !(o.customer_tel||'').includes(s) && !(o.customer_addr||'').toLowerCase().includes(s)) return false;
+    }
+    return true;
+  });
+
+  const exportCSV = () => {
+    const headers = ['วันที่','ชื่อ','เบอร์โทร','ที่อยู่','สินค้า','ยอด','สถานะ','เซลเพจ'];
+    const rows = filteredOrders.map(o => [
+      new Date(o.created_at).toLocaleString('th-TH'),
+      o.customer_name,
+      o.customer_tel,
+      `"${(o.customer_addr||'').replace(/"/g,'""')}"`,
+      o.package_name,
+      o.total || 0,
+      statusL[o.status] || o.status,
+      o.sp_pages?.name || '',
+    ]);
+    const bom = '\uFEFF';
+    const csv = bom + [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `orders-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    showToast('📥 Export สำเร็จ');
+  };
+
+  const filteredRev = filteredOrders.filter(o => o.status !== 'cancel').reduce((s, o) => s + (o.total || 0), 0);
 
   if (!authed) return (
     <div style={{ minHeight: '100vh', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Noto Sans Thai', sans-serif" }}>
@@ -159,8 +199,28 @@ export default function AdminDashboard() {
         </div>)}
 
         {tab === 'orders' && (<div>
-          {orders.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#ccc' }}>ยังไม่มีออเดอร์</div>}
-          {orders.map(o => (
+          {/* Filters */}
+          <div style={{ background: '#fff', borderRadius: 12, padding: 14, marginBottom: 12, border: '1px solid #eee' }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 ค้นหา ชื่อ/เบอร์/ที่อยู่"
+                style={{ ...inp, flex: 2, minWidth: 150 }} />
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ ...inp, flex: 1, minWidth: 130 }} />
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ ...inp, flex: 1, minWidth: 130 }} />
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                {[['all', 'ทั้งหมด'], ['pending', '⏳ รอจัดการ'], ['shipped', '🚚 ส่งแล้ว'], ['done', '✅ สำเร็จ'], ['cancel', '❌ ยกเลิก']].map(([v, l]) => (
+                  <button key={v} onClick={() => setStatusFilter(v)}
+                    style={{ background: statusFilter === v ? blue : '#f5f5f5', color: statusFilter === v ? '#fff' : '#666', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{l}</button>
+                ))}
+              </div>
+              <button onClick={exportCSV} style={{ background: green, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>📥 Export CSV</button>
+            </div>
+            <div style={{ fontSize: 12, color: '#999', marginTop: 8 }}>แสดง {filteredOrders.length}/{orders.length} รายการ · ยอดรวม ฿{filteredRev.toLocaleString()}</div>
+          </div>
+
+          {filteredOrders.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#ccc' }}>ไม่พบออเดอร์</div>}
+          {filteredOrders.map(o => (
             <div key={o.id} style={{ background: '#fff', borderRadius: 12, padding: 14, marginBottom: 8, border: '1px solid #eee' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                 <span style={{ fontSize: 10, color: '#ccc' }}>#{o.id.slice(0, 8)}</span>
