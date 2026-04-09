@@ -12,8 +12,14 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 export default function AdminDashboard() {
   const nav = useNavigate();
-  const [authed, setAuthed] = useState(false);
+  const [authed, setAuthed] = useState(() => sessionStorage.getItem('sp_authed') === '1');
   const [pass, setPass] = useState('');
+
+  const doLogin = () => {
+    if (pass === 'admin1234') { setAuthed(true); sessionStorage.setItem('sp_authed', '1'); }
+    else showToast('รหัสไม่ถูกต้อง');
+  };
+  const doLogout = () => { setAuthed(false); sessionStorage.removeItem('sp_authed'); };
   const [pages, setPages] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -118,9 +124,9 @@ export default function AdminDashboard() {
         <div style={{ fontSize: 40, marginBottom: 12 }}>🏪</div>
         <h2 style={{ color: blue, marginBottom: 20, fontSize: 20 }}>SalePage Admin</h2>
         <input type="password" placeholder="รหัสผ่าน" value={pass} onChange={e => setPass(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') pass === 'admin1234' ? setAuthed(true) : showToast('รหัสไม่ถูกต้อง'); }}
+          onKeyDown={e => { if (e.key === 'Enter') doLogin(); }}
           style={{ ...inp, width: '100%', marginBottom: 12, textAlign: 'center' }} />
-        <button onClick={() => pass === 'admin1234' ? setAuthed(true) : showToast('รหัสไม่ถูกต้อง')}
+        <button onClick={() => doLogin()}
           style={{ ...btnS(blue), width: '100%', padding: '12px 0', fontSize: 15 }}>เข้าสู่ระบบ</button>
         {toast && <div style={{ marginTop: 12, color: red, fontSize: 13 }}>{toast}</div>}
       </div>
@@ -137,7 +143,7 @@ export default function AdminDashboard() {
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: blue }}>🏪 SalePage Admin</h1>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <span style={{ fontSize: 12, color: '#999' }}>{orders.length} ออเดอร์ · ฿{totalRev.toLocaleString()}</span>
-            <button onClick={() => setAuthed(false)} style={{ ...btnS('#f5f5f5', '#999'), fontSize: 12, border: '1px solid #ddd' }}>ออกจากระบบ</button>
+            <button onClick={doLogout} style={{ ...btnS('#f5f5f5', '#999'), fontSize: 12, border: '1px solid #ddd' }}>ออกจากระบบ</button>
           </div>
         </div>
       </div>
