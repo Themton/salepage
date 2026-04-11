@@ -10,6 +10,7 @@ const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
 // ── Facebook Pixel ──
 function initPixel(pixelId) {
   if (!pixelId || typeof window === 'undefined') return;
+  console.log('[Pixel] Init:', pixelId);
   if (window.fbq) { window.fbq('init', pixelId); window.fbq('track', 'PageView'); return; }
   const f = window.fbq = function() { f.callMethod ? f.callMethod.apply(f, arguments) : f.queue.push(arguments); };
   f.push = f; f.loaded = true; f.version = '2.0'; f.queue = [];
@@ -23,6 +24,7 @@ function initPixel(pixelId) {
 }
 
 function fbTrack(event, data = {}) {
+  console.log('[Pixel] Track:', event, data);
   if (window.fbq) window.fbq('track', event, data);
 }
 
@@ -67,6 +69,10 @@ export default function SalePage() {
         setPage(p);
         trackEvent(p.id, 'PageView', { slug });
         initPixel(p.pixel_id);
+        // Fire ViewContent after pixel loads
+        setTimeout(() => {
+          fbTrack('ViewContent', { content_name: p.name, content_type: 'product', value: p.settings?.packages?.[0]?.price || 0, currency: 'THB' });
+        }, 1000);
       }
       setLoading(false);
     })();
@@ -89,7 +95,10 @@ export default function SalePage() {
   const imgs = p?.images || [];
   useEffect(() => { if (imgs.length < 2) return; const iv = setInterval(() => setSlideIdx(i => (i + 1) % imgs.length), 4e3); return () => clearInterval(iv); }, [imgs.length]);
 
-  const scrollToForm = () => formRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToForm = () => {
+    formRef.current?.scrollIntoView({ behavior: 'smooth' });
+    fbTrack('InitiateCheckout', { content_name: p?.name, currency: 'THB' });
+  };
 
   const submit = async () => {
     if (!form.name || !form.tel || !form.addr) return alert('กรุณากรอกข้อมูลให้ครบ');
@@ -115,7 +124,8 @@ export default function SalePage() {
       };
       const order = await createOrder(orderData);
       await trackEvent(page.id, 'Purchase', { value: selPkg.price, package: selPkg.name });
-      fbTrack('Purchase', { value: selPkg.price, currency: 'THB', content_name: p.name });
+      fbTrack('Purchase', { value: selPkg.price, currency: 'THB', content_name: p.name, num_items: 1 });
+      fbTrack('Lead', { content_name: p.name, value: selPkg.price, currency: 'THB' });
       setDone(true);
     } catch (e) { alert('เกิดข้อผิดพลาด กรุณาลองใหม่'); }
     setSending(false);
@@ -259,7 +269,7 @@ export default function SalePage() {
               const sel = pkg === i;
               const pct = pk.orig > 0 ? Math.round((1 - pk.price / pk.orig) * 100) : 0;
               return (
-                <div key={i} onClick={() => setPkg(i)}
+                <div key={i} onClick={() => { setPkg(i); fbTrack('AddToCart', { content_name: pk.name, value: pk.price, currency: 'THB' }); }}
                   style={{ borderRadius: 14, padding: '16px 14px', marginBottom: 8, cursor: 'pointer', position: 'relative', overflow: 'hidden', transition: 'all .2s',
                     border: sel ? `2.5px solid ${accent}` : '1.5px solid #e0dcd4',
                     background: sel ? '#f0faf4' : '#fff',
