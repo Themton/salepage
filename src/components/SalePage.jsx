@@ -11,7 +11,7 @@ const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
 function initPixel(pixelId) {
   if (!pixelId || typeof window === 'undefined') return;
   console.log('[Pixel] Init:', pixelId);
-  if (window.fbq) { window.fbq('init', pixelId); window.fbq('track', 'PageView'); return; }
+  if (window.fbq) return;
   const f = window.fbq = function() { f.callMethod ? f.callMethod.apply(f, arguments) : f.queue.push(arguments); };
   f.push = f; f.loaded = true; f.version = '2.0'; f.queue = [];
   const s = document.createElement('script'); s.async = true; s.src = 'https://connect.facebook.net/en_US/fbevents.js';
