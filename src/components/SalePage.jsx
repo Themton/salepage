@@ -28,6 +28,18 @@ function fbTrack(event, data = {}) {
   if (window.fbq) window.fbq('track', event, data);
 }
 
+// ── Telegram Notification ──
+const TG_BOT = '8541537002:AAEISzVZ1wTJnE_C2YJ9xkJ1j5al3EGmtqQ';
+const TG_CHAT = '-5239129044';
+function notifyTelegram(pageName, name, tel, addr, pkg, total) {
+  const msg = `🛒 *ออเดอร์ใหม่!*\n\n📄 เซลเพจ: ${pageName}\n👤 ชื่อ: ${name}\n📞 เบอร์: ${tel}\n📍 ที่อยู่: ${addr}\n📦 สินค้า: ${pkg}\n💰 ยอด: ฿${Number(total).toLocaleString()}\n\n⏰ ${new Date().toLocaleString('th-TH')}`;
+  fetch(`https://api.telegram.org/bot${TG_BOT}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: TG_CHAT, text: msg, parse_mode: 'Markdown' }),
+  }).catch(() => {});
+}
+
 export default function SalePage() {
   const { slug } = useParams();
   const [page, setPage] = useState(null);
@@ -126,6 +138,7 @@ export default function SalePage() {
       await trackEvent(page.id, 'Purchase', { value: selPkg.price, package: selPkg.name });
       fbTrack('Purchase', { value: selPkg.price, currency: 'THB', content_name: p.name, num_items: 1 });
       fbTrack('Lead', { content_name: p.name, value: selPkg.price, currency: 'THB' });
+      notifyTelegram(p.name, form.name, form.tel, orderData.customer_addr, selPkg.name, selPkg.price);
       setDone(true);
     } catch (e) { alert('เกิดข้อผิดพลาด กรุณาลองใหม่'); }
     setSending(false);
