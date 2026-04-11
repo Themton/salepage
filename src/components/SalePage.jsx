@@ -30,7 +30,7 @@ function fbTrack(event, data = {}) {
 
 // ── Telegram Notification (via Worker) ──
 function notifyTelegram(pageName, name, tel, addr, pkg, total) {
-  const PROXY = import.meta.env.VITE_FLASH_PROXY;
+  const PROXY = import.meta.env.VITE_NOTIFY_URL;
   if (!PROXY) return;
   fetch(PROXY, {
     method: 'POST',

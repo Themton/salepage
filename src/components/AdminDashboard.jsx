@@ -15,8 +15,9 @@ export default function AdminDashboard() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('sp_authed') === '1');
   const [pass, setPass] = useState('');
 
+  const ADMIN_PASS = import.meta.env.VITE_ADMIN_PASS || 'admin1234';
   const doLogin = () => {
-    if (pass === 'admin1234') { setAuthed(true); sessionStorage.setItem('sp_authed', '1'); }
+    if (pass === ADMIN_PASS) { setAuthed(true); sessionStorage.setItem('sp_authed', '1'); }
     else showToast('รหัสไม่ถูกต้อง');
   };
   const doLogout = () => { setAuthed(false); sessionStorage.removeItem('sp_authed'); };
