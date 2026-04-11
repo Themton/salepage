@@ -22,7 +22,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_FLASH_PROXY: ${{ secrets.VITE_FLASH_PROXY }}
+          VITE_NOTIFY_URL: ${{ secrets.VITE_NOTIFY_URL }}
+          VITE_ADMIN_PASS: ${{ secrets.VITE_ADMIN_PASS }}
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
