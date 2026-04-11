@@ -7,6 +7,10 @@ const FLASH_MCH_ID = "CA5610";
 const FLASH_API_KEY = "0bc50ae59546"; // ← ใส่ key เต็มตรงนี้
 const FLASH_API_URL = "https://open-api-training.flashexpress.com"; // Training ENV
 
+// === Telegram ===
+const TG_BOT = "8541537002:AAEISzVZ1wTJnE_C2YJ9xkJ1j5al3EGmtqQ";
+const TG_CHAT = "-5239129044";
+
 // === Helpers ===
 // Default sender info — แก้ตรงนี้
 const DEFAULT_SENDER = {
@@ -114,6 +118,17 @@ export default {
 
         case "tracking": {
           result = await callFlash("/open/v1/orders/tracking", { pno: data.pno });
+          break;
+        }
+
+        case "notify": {
+          const msg = `🛒 *ออเดอร์ใหม่!*\n\n📄 เซลเพจ: ${data.pageName || ''}\n👤 ชื่อ: ${data.name || ''}\n📞 เบอร์: ${data.tel || ''}\n📍 ที่อยู่: ${data.addr || ''}\n📦 สินค้า: ${data.pkg || ''}\n💰 ยอด: ฿${Number(data.total || 0).toLocaleString()}\n\n⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`;
+          const tgResp = await fetch(`https://api.telegram.org/bot${TG_BOT}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: TG_CHAT, text: msg, parse_mode: 'Markdown' }),
+          });
+          result = await tgResp.json();
           break;
         }
 
